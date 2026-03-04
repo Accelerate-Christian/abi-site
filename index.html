@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0083)file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The American BioSecurity Initiative</title>
-<link href="./index_files/css2" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
     --navy: #1A2636;
@@ -1020,34 +1020,104 @@
 </head>
 <body>
 
+<!-- PASSWORD GATE -->
+<div id="passwordGate" style="
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
+  background: var(--navy-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-body);
+">
+  <div style="text-align: center; max-width: 400px; padding: 40px;">
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 80px; height: 80px; margin-bottom: 32px;">
+      <rect width="80" height="80" rx="12" fill="#1A2636"/>
+      <circle cx="40" cy="40" r="26" fill="none" stroke="#B0BEC5" stroke-width="2.5"/>
+      <circle cx="40" cy="40" r="17" fill="none" stroke="#3A4F65" stroke-width="2"/>
+      <line x1="40" y1="10" x2="40" y2="24" stroke="#3A4F65" stroke-width="2" stroke-linecap="round"/>
+      <line x1="40" y1="56" x2="40" y2="70" stroke="#3A4F65" stroke-width="2" stroke-linecap="round"/>
+      <line x1="10" y1="40" x2="24" y2="40" stroke="#3A4F65" stroke-width="2" stroke-linecap="round"/>
+      <line x1="56" y1="40" x2="70" y2="40" stroke="#3A4F65" stroke-width="2" stroke-linecap="round"/>
+      <line x1="40" y1="27" x2="40" y2="33" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="40" y1="47" x2="40" y2="53" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="27" y1="40" x2="33" y2="40" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="47" y1="40" x2="53" y2="40" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="40" cy="40" r="8" fill="#C62828"/>
+      <rect x="48" y="37" width="10" height="6" rx="3" fill="#C62828"/>
+    </svg>
+    <div style="font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--white-70); margin-bottom: 8px;">CLASSIFIED BRIEFING</div>
+    <div style="font-size: 14px; color: var(--white-50); margin-bottom: 32px;">Authorization required to proceed</div>
+    <div style="position: relative;">
+      <input id="gatePassword" type="password" placeholder="Enter access code" autocomplete="off" style="
+        width: 100%; padding: 14px 20px; border-radius: 4px;
+        border: 1px solid var(--white-15); background: var(--white-08);
+        color: var(--white); font-family: var(--font-mono); font-size: 15px;
+        outline: none; transition: border-color 0.3s;
+      " onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--white-15)'">
+    </div>
+    <div id="gateError" style="color: var(--red-bright); font-size: 13px; margin-top: 10px; opacity: 0; transition: opacity 0.3s;">Invalid access code</div>
+    <button onclick="checkGatePassword()" style="
+      margin-top: 20px; width: 100%; padding: 14px 20px;
+      background: var(--red); color: white; border: none; border-radius: 4px;
+      font-family: var(--font-display); font-size: 15px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+      transition: background 0.3s;
+    " onmouseover="this.style.background='var(--red-bright)'" onmouseout="this.style.background='var(--red)'">ACCESS BRIEFING</button>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'abi_access';
+  var p = 'letmein';
+  if(document.cookie.indexOf(k+'=granted') !== -1){
+    document.getElementById('passwordGate').style.display = 'none';
+  }
+  window.checkGatePassword = function(){
+    var input = document.getElementById('gatePassword').value;
+    if(input === p){
+      document.cookie = k+'=granted; path=/; max-age=2592000';
+      document.getElementById('passwordGate').style.opacity = '0';
+      document.getElementById('passwordGate').style.transition = 'opacity 0.5s ease';
+      setTimeout(function(){ document.getElementById('passwordGate').style.display = 'none'; }, 500);
+    } else {
+      document.getElementById('gateError').style.opacity = '1';
+      document.getElementById('gatePassword').style.borderColor = 'var(--red)';
+      setTimeout(function(){ document.getElementById('gateError').style.opacity = '0'; }, 2000);
+    }
+  };
+  document.getElementById('gatePassword').addEventListener('keypress', function(e){
+    if(e.key === 'Enter') checkGatePassword();
+  });
+})();
+</script>
+<!-- END PASSWORD GATE -->
+
 <!-- NAVIGATION -->
-<nav id="navbar" class="">
-  <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="nav-logo">
+<nav id="navbar">
+  <a href="#" class="nav-logo">
     <svg class="nav-mark" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="36" height="36" rx="5" fill="#1A2636"></rect>
-      <circle cx="18" cy="18" r="12" fill="none" stroke="#B0BEC5" stroke-width="2"></circle>
-      <circle cx="18" cy="18" r="8" fill="none" stroke="#3A4F65" stroke-width="1.5"></circle>
-      <line x1="18" y1="5" x2="18" y2="11" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"></line>
-      <line x1="18" y1="25" x2="18" y2="31" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"></line>
-      <line x1="5" y1="18" x2="11" y2="18" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"></line>
-      <line x1="25" y1="18" x2="31" y2="18" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"></line>
-      <line x1="18" y1="12" x2="18" y2="15" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"></line>
-      <line x1="18" y1="21" x2="18" y2="24" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"></line>
-      <line x1="12" y1="18" x2="15" y2="18" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"></line>
-      <line x1="21" y1="18" x2="24" y2="18" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"></line>
-      <circle cx="18" cy="18" r="4" fill="#C62828"></circle>
-      <rect x="22" y="16.5" width="5" height="3" rx="1.5" fill="#C62828"></rect>
+      <rect width="36" height="36" rx="5" fill="#1A2636"/>
+      <circle cx="18" cy="18" r="12" fill="none" stroke="#B0BEC5" stroke-width="2"/>
+      <circle cx="18" cy="18" r="8" fill="none" stroke="#3A4F65" stroke-width="1.5"/>
+      <line x1="18" y1="5" x2="18" y2="11" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="18" y1="25" x2="18" y2="31" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="5" y1="18" x2="11" y2="18" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="25" y1="18" x2="31" y2="18" stroke="#3A4F65" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="18" y1="12" x2="18" y2="15" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"/>
+      <line x1="18" y1="21" x2="18" y2="24" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"/>
+      <line x1="12" y1="18" x2="15" y2="18" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"/>
+      <line x1="21" y1="18" x2="24" y2="18" stroke="#3A4F65" stroke-width="1" stroke-linecap="round"/>
+      <circle cx="18" cy="18" r="4" fill="#C62828"/>
+      <rect x="22" y="16.5" width="5" height="3" rx="1.5" fill="#C62828"/>
     </svg>
     <div class="nav-divider"></div>
     <div class="nav-logo-text">The American Biosecurity Initiative</div>
   </a>
   <ul class="nav-links">
-    <li><a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#threat">The Threat</a></li>
-    <li><a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#pillars">Our Pillars</a></li>
-    <li><a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#readiness">Readiness Index</a></li>
-    <li><a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#intel">Intelligence</a></li>
-    <li><a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#coalition">Coalition</a></li>
-    <li><a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#action" class="nav-cta">Take Action</a></li>
+    <li><a href="#threat">The Threat</a></li>
+    <li><a href="#pillars">Our Pillars</a></li>
+    <li><a href="#readiness">Readiness Index</a></li>
+    <li><a href="#intel">Intelligence</a></li>
+    <li><a href="#coalition">Coalition</a></li>
+    <li><a href="#action" class="nav-cta">Take Action</a></li>
   </ul>
 </nav>
 
@@ -1072,8 +1142,8 @@
     </p>
     
     <div class="hero-ctas">
-      <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="btn-primary">Read the BioSecurity Audit</a>
-      <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="btn-secondary">Explore the Threat</a>
+      <a href="#" class="btn-primary">Read the BioSecurity Audit</a>
+      <a href="#" class="btn-secondary">Explore the Threat</a>
     </div>
   </div>
   
@@ -1115,58 +1185,58 @@
       <div class="pillar-card">
         <div class="pillar-number">I</div>
         <svg class="pillar-icon" viewBox="0 0 48 48" fill="none">
-          <path d="M24 4L4 14v14c0 10 20 16 20 16s20-6 20-16V14L24 4z" stroke="#E53935" stroke-width="2" fill="none"></path>
-          <path d="M16 24h16M24 16v16" stroke="white" stroke-width="2" stroke-linecap="round"></path>
+          <path d="M24 4L4 14v14c0 10 20 16 20 16s20-6 20-16V14L24 4z" stroke="#E53935" stroke-width="2" fill="none"/>
+          <path d="M16 24h16M24 16v16" stroke="white" stroke-width="2" stroke-linecap="round"/>
         </svg>
         <div class="pillar-label">Pillar I</div>
         <div class="pillar-name">Supply Chain Security</div>
         <p class="pillar-desc">Medicine is ammunition. A nation that outsources its production to adversaries through its own policy choices has already surrendered. We must secure the trusted network.</p>
-        <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="pillar-link">The Trusted Network</a>
+        <a href="#" class="pillar-link">The Trusted Network</a>
       </div>
       
       <div class="pillar-card">
         <div class="pillar-number">II</div>
         <svg class="pillar-icon" viewBox="0 0 48 48" fill="none">
-          <rect x="6" y="8" width="36" height="32" rx="2" stroke="#E53935" stroke-width="2" fill="none"></rect>
-          <path d="M14 18h20M14 24h14M14 30h8" stroke="white" stroke-width="2" stroke-linecap="round"></path>
-          <circle cx="38" cy="34" r="8" fill="#1A2636" stroke="#E53935" stroke-width="2"></circle>
-          <path d="M36 34l2 2 4-4" stroke="#E53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          <rect x="6" y="8" width="36" height="32" rx="2" stroke="#E53935" stroke-width="2" fill="none"/>
+          <path d="M14 18h20M14 24h14M14 30h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="38" cy="34" r="8" fill="#1A2636" stroke="#E53935" stroke-width="2"/>
+          <path d="M36 34l2 2 4-4" stroke="#E53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <div class="pillar-label">Pillar II</div>
         <div class="pillar-name">Intellectual Security</div>
         <p class="pillar-desc">A patent is more than a business asset. It is a national security blueprint. You would not declassify nuclear launch codes to lower defense spending. March-in rights do exactly that to our biological defense blueprints.</p>
-        <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="pillar-link">The Burned Blueprint</a>
+        <a href="#" class="pillar-link">The Burned Blueprint</a>
       </div>
       
       <div class="pillar-card">
         <div class="pillar-number">III</div>
         <svg class="pillar-icon" viewBox="0 0 48 48" fill="none">
-          <path d="M18 6 Q24 14 18 22 Q12 30 18 38" stroke="#E53935" stroke-width="2" fill="none" stroke-linecap="round"></path>
-          <path d="M30 6 Q24 14 30 22 Q36 30 30 38" stroke="#E53935" stroke-width="2" fill="none" stroke-linecap="round"></path>
-          <line x1="18" y1="14" x2="30" y2="14" stroke="white" stroke-width="1.5" opacity="0.5"></line>
-          <line x1="15" y1="22" x2="33" y2="22" stroke="white" stroke-width="1.5" opacity="0.5"></line>
-          <line x1="18" y1="30" x2="30" y2="30" stroke="white" stroke-width="1.5" opacity="0.5"></line>
-          <circle cx="38" cy="10" r="6" fill="none" stroke="#E53935" stroke-width="1.5" opacity="0.5"></circle>
-          <circle cx="38" cy="10" r="2" fill="#E53935" opacity="0.5"></circle>
+          <path d="M18 6 Q24 14 18 22 Q12 30 18 38" stroke="#E53935" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M30 6 Q24 14 30 22 Q36 30 30 38" stroke="#E53935" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <line x1="18" y1="14" x2="30" y2="14" stroke="white" stroke-width="1.5" opacity="0.5"/>
+          <line x1="15" y1="22" x2="33" y2="22" stroke="white" stroke-width="1.5" opacity="0.5"/>
+          <line x1="18" y1="30" x2="30" y2="30" stroke="white" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="38" cy="10" r="6" fill="none" stroke="#E53935" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="38" cy="10" r="2" fill="#E53935" opacity="0.5"/>
         </svg>
         <div class="pillar-label">Pillar III</div>
         <div class="pillar-name">Genetic Security</div>
         <p class="pillar-desc">The next war will not be fought with bullets, but with biology and code. Adversarial nations are actively scraping American genomic data and feeding it into military-civil fusion programs. We didn't get hacked. We left the door open.</p>
-        <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="pillar-link">The Bio-Spy Threat</a>
+        <a href="#" class="pillar-link">The Bio-Spy Threat</a>
       </div>
 
       <div class="pillar-card">
         <div class="pillar-number">IV</div>
         <svg class="pillar-icon" viewBox="0 0 48 48" fill="none">
-          <circle cx="24" cy="24" r="18" stroke="#E53935" stroke-width="2" fill="none"></circle>
-          <path d="M24 6v36M6 24h36" stroke="white" stroke-width="1" opacity="0.3"></path>
-          <path d="M14 10c5 7 5 21 0 28M34 10c-5 7-5 21 0 28" stroke="white" stroke-width="1" opacity="0.2"></path>
-          <path d="M24 16l8 4v6c0 5-8 8-8 8s-8-3-8-8v-6l8-4z" fill="#1A2636" stroke="#E53935" stroke-width="1.5"></path>
+          <circle cx="24" cy="24" r="18" stroke="#E53935" stroke-width="2" fill="none"/>
+          <path d="M24 6v36M6 24h36" stroke="white" stroke-width="1" opacity="0.3"/>
+          <path d="M14 10c5 7 5 21 0 28M34 10c-5 7-5 21 0 28" stroke="white" stroke-width="1" opacity="0.2"/>
+          <path d="M24 16l8 4v6c0 5-8 8-8 8s-8-3-8-8v-6l8-4z" fill="#1A2636" stroke="#E53935" stroke-width="1.5"/>
         </svg>
         <div class="pillar-label">Pillar IV</div>
         <div class="pillar-name">Strategic Independence</div>
         <p class="pillar-desc">Adopt their prices, adopt their priorities. MFN pricing surrenders American value decisions to foreign bureaucracies whose metrics put no value on the drugs we need most for biodefense. A nation that lets foreign bureaucrats price its readiness has outsourced its survival.</p>
-        <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="pillar-link">The Sovereignty Doctrine</a>
+        <a href="#" class="pillar-link">The Sovereignty Doctrine</a>
       </div>
     </div>
   </div>
@@ -1215,28 +1285,28 @@
           </div>
         </div>
         <div class="intel-featured-body">
-          <div class="intel-tag">BioSecurity Audit — 2026</div>
+          <div class="intel-tag">BioSecurity Audit &mdash; 2026</div>
           <h3>The American BioSecurity Audit: Quantifying the Vulnerability</h3>
           <p>The inaugural assessment of America's biological readiness, documenting critical supply chain dependencies, IP theft vectors, genomic data exposure, and policy vulnerabilities that threaten our innovation frontier.</p>
-          <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="btn-primary" style="font-size:12px; padding:12px 28px;">Download Executive Summary</a>
+          <a href="#" class="btn-primary" style="font-size:12px; padding:12px 28px;">Download Executive Summary</a>
         </div>
       </div>
       
       <div class="intel-sidebar">
-        <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="intel-card">
+        <a href="#" class="intel-card">
           <div class="intel-tag">Threat Assessment</div>
           <h4>China's Military-Civil Fusion: The Genomic Data Threat to American Readiness</h4>
-          <div class="intel-meta">February 2026 · 12 min read</div>
+          <div class="intel-meta">February 2026 &middot; 12 min read</div>
         </a>
-        <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="intel-card">
+        <a href="#" class="intel-card">
           <div class="intel-tag">Policy Brief</div>
           <h4>MFN Pricing as Policy Breach: How Foreign Bureaucrats Set the Budget for American Readiness</h4>
-          <div class="intel-meta">January 2026 · 8 min read</div>
+          <div class="intel-meta">January 2026 &middot; 8 min read</div>
         </a>
-        <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="intel-card">
+        <a href="#" class="intel-card">
           <div class="intel-tag">Expert Analysis</div>
           <h4>The API Chokepoint: Mapping America's Pharmaceutical Supply Chain Vulnerability</h4>
-          <div class="intel-meta">January 2026 · 15 min read</div>
+          <div class="intel-meta">January 2026 &middot; 15 min read</div>
         </a>
       </div>
     </div>
@@ -1272,28 +1342,28 @@
         <div class="scorecard-row">
           <div>
             <div class="scorecard-name">Sen. [Example] (R)</div>
-            <div class="scorecard-role">U.S. Senate · Armed Services Committee</div>
+            <div class="scorecard-role">U.S. Senate &middot; Armed Services Committee</div>
           </div>
           <div class="grade grade-a">A</div>
         </div>
         <div class="scorecard-row">
           <div>
             <div class="scorecard-name">Sen. [Example] (D)</div>
-            <div class="scorecard-role">U.S. Senate · Foreign Relations Committee</div>
+            <div class="scorecard-role">U.S. Senate &middot; Foreign Relations Committee</div>
           </div>
           <div class="grade grade-b">B</div>
         </div>
         <div class="scorecard-row">
           <div>
             <div class="scorecard-name">Rep. [Example] (R)</div>
-            <div class="scorecard-role">U.S. House · Energy &amp; Commerce</div>
+            <div class="scorecard-role">U.S. House &middot; Energy &amp; Commerce</div>
           </div>
           <div class="grade grade-d">D</div>
         </div>
         <div class="scorecard-row">
           <div>
             <div class="scorecard-name">Rep. [Example] (D)</div>
-            <div class="scorecard-role">U.S. House · Homeland Security</div>
+            <div class="scorecard-role">U.S. House &middot; Homeland Security</div>
           </div>
           <div class="grade grade-f">F</div>
         </div>
@@ -1313,37 +1383,37 @@
       <div class="triangle-svg-wrapper">
         <svg viewBox="0 0 600 520" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- Triangle outline -->
-          <path d="M300,100 L510,425 L90,425 Z" fill="none" stroke="white" stroke-width="0.5" opacity="0.08"></path>
+          <path d="M300,100 L510,425 L90,425 Z" fill="none" stroke="white" stroke-width="0.5" opacity="0.08"/>
           
           <!-- Connection lines (very thin, behind circles) -->
-          <line x1="300" y1="175" x2="135" y2="370" stroke="#E53935" stroke-width="0.5" opacity="0.12"></line>
-          <line x1="300" y1="175" x2="465" y2="370" stroke="#E53935" stroke-width="0.5" opacity="0.12"></line>
-          <line x1="170" y1="425" x2="430" y2="425" stroke="#E53935" stroke-width="0.5" opacity="0.12"></line>
+          <line x1="300" y1="175" x2="135" y2="370" stroke="#E53935" stroke-width="0.5" opacity="0.12"/>
+          <line x1="300" y1="175" x2="465" y2="370" stroke="#E53935" stroke-width="0.5" opacity="0.12"/>
+          <line x1="170" y1="425" x2="430" y2="425" stroke="#E53935" stroke-width="0.5" opacity="0.12"/>
           
           <!-- Center label -->
-          <text x="300" y="305" text-anchor="middle" font-family="&#39;Barlow Condensed&#39;, sans-serif" font-weight="700" font-size="13" letter-spacing="4" fill="white" opacity="0.25">SHARED</text>
-          <text x="300" y="322" text-anchor="middle" font-family="&#39;Barlow Condensed&#39;, sans-serif" font-weight="700" font-size="13" letter-spacing="4" fill="white" opacity="0.25">SOVEREIGNTY</text>
+          <text x="300" y="305" text-anchor="middle" font-family="'Barlow Condensed', sans-serif" font-weight="700" font-size="13" letter-spacing="4" fill="white" opacity="0.25">SHARED</text>
+          <text x="300" y="322" text-anchor="middle" font-family="'Barlow Condensed', sans-serif" font-weight="700" font-size="13" letter-spacing="4" fill="white" opacity="0.25">SOVEREIGNTY</text>
           
           <!-- Vertex: Technology (top) -->
-          <circle cx="300" cy="95" r="80" fill="#1A2636" stroke="#E53935" stroke-width="2"></circle>
-          <circle cx="300" cy="95" r="80" fill="rgba(229,57,53,0.05)"></circle>
-          <circle cx="300" cy="95" r="78" fill="none" stroke="rgba(229,57,53,0.08)" stroke-width="1"></circle>
-          <text x="300" y="88" text-anchor="middle" font-family="&#39;Barlow Condensed&#39;, sans-serif" font-weight="700" font-size="18" letter-spacing="4" fill="#E53935">TECH</text>
-          <text x="300" y="108" text-anchor="middle" font-family="&#39;IBM Plex Mono&#39;, monospace" font-size="9" letter-spacing="2" fill="white" opacity="0.5">BIO-AI FRONTIER</text>
+          <circle cx="300" cy="95" r="80" fill="#1A2636" stroke="#E53935" stroke-width="2"/>
+          <circle cx="300" cy="95" r="80" fill="rgba(229,57,53,0.05)"/>
+          <circle cx="300" cy="95" r="78" fill="none" stroke="rgba(229,57,53,0.08)" stroke-width="1"/>
+          <text x="300" y="88" text-anchor="middle" font-family="'Barlow Condensed', sans-serif" font-weight="700" font-size="18" letter-spacing="4" fill="#E53935">TECH</text>
+          <text x="300" y="108" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="2" fill="white" opacity="0.5">BIO-AI FRONTIER</text>
 
           <!-- Vertex: Defense (bottom left) -->
-          <circle cx="90" cy="425" r="80" fill="#1A2636" stroke="#E53935" stroke-width="2"></circle>
-          <circle cx="90" cy="425" r="80" fill="rgba(229,57,53,0.05)"></circle>
-          <circle cx="90" cy="425" r="78" fill="none" stroke="rgba(229,57,53,0.08)" stroke-width="1"></circle>
-          <text x="90" y="418" text-anchor="middle" font-family="&#39;Barlow Condensed&#39;, sans-serif" font-weight="700" font-size="18" letter-spacing="4" fill="#E53935">DEFENSE</text>
-          <text x="90" y="438" text-anchor="middle" font-family="&#39;IBM Plex Mono&#39;, monospace" font-size="9" letter-spacing="2" fill="white" opacity="0.5">READINESS</text>
+          <circle cx="90" cy="425" r="80" fill="#1A2636" stroke="#E53935" stroke-width="2"/>
+          <circle cx="90" cy="425" r="80" fill="rgba(229,57,53,0.05)"/>
+          <circle cx="90" cy="425" r="78" fill="none" stroke="rgba(229,57,53,0.08)" stroke-width="1"/>
+          <text x="90" y="418" text-anchor="middle" font-family="'Barlow Condensed', sans-serif" font-weight="700" font-size="18" letter-spacing="4" fill="#E53935">DEFENSE</text>
+          <text x="90" y="438" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="2" fill="white" opacity="0.5">READINESS</text>
           
           <!-- Vertex: Biopharma (bottom right) -->
-          <circle cx="510" cy="425" r="80" fill="#1A2636" stroke="#E53935" stroke-width="2"></circle>
-          <circle cx="510" cy="425" r="80" fill="rgba(229,57,53,0.05)"></circle>
-          <circle cx="510" cy="425" r="78" fill="none" stroke="rgba(229,57,53,0.08)" stroke-width="1"></circle>
-          <text x="510" y="418" text-anchor="middle" font-family="&#39;Barlow Condensed&#39;, sans-serif" font-weight="700" font-size="18" letter-spacing="4" fill="#E53935">PHARMA</text>
-          <text x="510" y="438" text-anchor="middle" font-family="&#39;IBM Plex Mono&#39;, monospace" font-size="9" letter-spacing="2" fill="white" opacity="0.5">INNOVATION</text>
+          <circle cx="510" cy="425" r="80" fill="#1A2636" stroke="#E53935" stroke-width="2"/>
+          <circle cx="510" cy="425" r="80" fill="rgba(229,57,53,0.05)"/>
+          <circle cx="510" cy="425" r="78" fill="none" stroke="rgba(229,57,53,0.08)" stroke-width="1"/>
+          <text x="510" y="418" text-anchor="middle" font-family="'Barlow Condensed', sans-serif" font-weight="700" font-size="18" letter-spacing="4" fill="#E53935">PHARMA</text>
+          <text x="510" y="438" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="2" fill="white" opacity="0.5">INNOVATION</text>
         </svg>
       </div>
     </div>
@@ -1362,8 +1432,8 @@
     <p class="footer-cta-text">America's capacity to discover and manufacture<br>life-saving medicines is <span style="color:var(--red-bright)">eroding.</span></p>
     <p class="footer-cta-sub">Domestic pharmaceutical production has declined 35% since 2006. Restrictive price controls and weakened IP protections are accelerating the loss of our most critical strategic capability. This is not an economic debate. It is a national security crisis that demands action now.</p>
     <div class="footer-cta-actions">
-      <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="btn-primary">Join the Initiative</a>
-      <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#" class="btn-secondary">Subscribe to Briefings</a>
+      <a href="#" class="btn-primary">Join the Initiative</a>
+      <a href="#" class="btn-secondary">Subscribe to Briefings</a>
     </div>
   </div>
 </section>
@@ -1372,12 +1442,12 @@
 <footer>
   <div class="footer-inner">
     <div class="footer-left">
-      © 2026 The American BioSecurity Initiative · 501(c)(4) Social Welfare Organization
+      &copy; 2026 The American BioSecurity Initiative &middot; 501(c)(4) Social Welfare Organization
     </div>
     <div class="footer-right">
-      <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#">Privacy Policy</a>
-      <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#">Press</a>
-      <a href="file:///Users/christianclymer/Downloads/American_BioSecurity_Initiative_Site_3.html#">Contact</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Press</a>
+      <a href="#">Contact</a>
     </div>
   </div>
 </footer>
@@ -1390,6 +1460,5 @@
   });
 </script>
 
-
-
-</body></html>
+</body>
+</html>
