@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABI · Global Supply Chain Assessment</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;600&family=Source+Serif+4:opsz,ital,wght@8..60,1,400;8..60,1,600&display=swap" rel="stylesheet">
+    <title>ABI · Supply Chain Vulnerability Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
     <style>
@@ -18,23 +18,22 @@
             --silver: #B0BEC5;
             --font-display: 'Barlow Condensed', sans-serif;
             --font-mono: 'IBM Plex Mono', monospace;
-            --font-body: 'Inter', sans-serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             background: var(--navy-deep); 
             color: var(--white); 
-            font-family: var(--font-body); 
+            font-family: 'Inter', sans-serif; 
             height: 100vh; 
             overflow: hidden; 
             display: flex;
             flex-direction: column;
         }
 
-        /* --- UI OVERLAYS --- */
-        .app-header {
-            padding: 12px 48px;
+        /* Branding Sync */
+        .header {
+            padding: 14px 28px;
             background: var(--navy);
             border-bottom: 1px solid rgba(255,255,255,0.08);
             display: flex;
@@ -42,215 +41,155 @@
             align-items: center;
             z-index: 100;
         }
+        .header-title { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: 2px; text-transform: uppercase; }
+        .live-status { font-family: var(--font-mono); font-size: 10px; color: var(--red-bright); display: flex; align-items: center; gap: 8px; }
+        .dot { width: 8px; height: 8px; background: var(--red-bright); border-radius: 50%; animation: pulse 2s infinite; }
 
-        .controls {
-            position: absolute;
-            top: 100px;
-            left: 40px;
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .control-group {
-            background: rgba(26, 38, 54, 0.8);
-            padding: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .control-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: var(--font-display);
-            letter-spacing: 2px;
-            font-size: 13px;
-            cursor: pointer;
-            margin-bottom: 8px;
-            color: var(--silver);
-        }
-
-        .control-item input { accent-color: var(--red-bright); cursor: pointer; }
-
-        /* --- MAP ELEMENTS --- */
-        .main-viewport { flex: 1; position: relative; background: radial-gradient(circle at center, var(--navy-mid), var(--navy-deep)); }
+        /* Map UI */
+        .main { flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at center, var(--navy-mid), var(--navy-deep)); }
         #mapSvg { width: 100%; height: 100%; }
         
-        .country { fill: rgba(255,255,255,0.04); stroke: rgba(255,255,255,0.1); transition: 0.3s; cursor: pointer; }
-        .country-adversarial { fill: rgba(198, 40, 40, 0.15); stroke: rgba(198, 40, 40, 0.4); }
-        .country-allied { fill: rgba(76, 175, 80, 0.1); }
-        .country-target { fill: rgba(255, 255, 255, 0.08); stroke: var(--white); stroke-width: 1px; }
+        .country { fill: rgba(255,255,255,0.05); stroke: rgba(255,255,255,0.1); stroke-width: 0.4; transition: 0.3s; cursor: pointer; }
+        .country-adversarial { fill: rgba(198, 40, 40, 0.15); }
+        .country-allied { fill: rgba(76, 175, 80, 0.08); }
+        .country:hover { fill: rgba(255,255,255,0.15); }
 
-        /* --- ANIMATED LINES --- */
-        .route-path { fill: none; stroke-dasharray: 8, 4; stroke-width: 1.5; opacity: 0.6; }
-        .particle { filter: drop-shadow(0 0 5px var(--red-bright)); }
+        /* Animation Layers */
+        .scan-line { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--red-bright), transparent); opacity: 0.3; pointer-events: none; z-index: 5; animation: scan 8s linear infinite; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        
+        .route-line { fill: none; stroke-dasharray: 10, 5; animation: dashMove 30s linear infinite; opacity: 0.5; }
+        @keyframes dashMove { to { stroke-dashoffset: -1000; } }
 
-        /* --- DETAIL PANEL --- */
+        /* Controls */
+        .controls { position: absolute; top: 20px; left: 20px; z-index: 20; display: flex; flex-direction: column; gap: 4px; }
+        .control-btn { 
+            background: rgba(26, 38, 54, 0.9); border: 1px solid rgba(255,255,255,0.1); color: var(--silver);
+            padding: 10px 16px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 2px; font-size: 12px; cursor: pointer; text-align: left; min-width: 200px;
+        }
+        .control-btn.active { border-left: 3px solid var(--red-bright); color: white; background: var(--navy-mid); }
+
+        /* Detail Panel */
         .detail-panel {
-            position: absolute; top: 0; right: 0; width: 420px; height: 100%;
+            position: absolute; top: 0; right: 0; width: 400px; height: 100%;
             background: var(--navy); border-left: 2px solid var(--red);
-            transform: translateX(100%); transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(100%); transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
             padding: 40px; overflow-y: auto; z-index: 200;
         }
         .detail-panel.open { transform: translateX(0); box-shadow: -20px 0 50px rgba(0,0,0,0.5); }
-        
-        .score-box { background: var(--navy-deep); border: 1px solid rgba(255,255,255,0.05); padding: 25px; margin: 20px 0; }
-        .score-val { font-family: var(--font-display); font-size: 48px; font-weight: 800; color: var(--red-bright); line-height: 1; }
-        .score-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; color: var(--silver); margin-top: 10px; text-transform: uppercase; }
-        
-        .close-btn { background: var(--red); border: none; color: white; padding: 10px 20px; font-family: var(--font-display); letter-spacing: 2px; cursor: pointer; float: right; }
+        .close-x { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        .stat-card { background: var(--navy-deep); border: 1px solid rgba(255,255,255,0.05); padding: 20px; margin: 20px 0; }
+        .stat-num { font-family: var(--font-display); font-size: 44px; font-weight: 800; color: var(--red-bright); }
+        .stat-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; color: var(--silver); text-transform: uppercase; }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<header class="app-header">
-    <div style="font-family:var(--font-display); letter-spacing:3px; text-transform:uppercase;">Supply Chain Intelligence Portal</div>
-    <div style="font-family:var(--font-mono); font-size:10px; color:var(--red-bright);">LIVE ASSESSMENT // FEB 2026</div>
-</header>
+<div class="header">
+    <div>
+        <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:4px; color:var(--red-bright); margin-bottom:2px;">/// STRATEGIC INTELLIGENCE PORTAL</div>
+        <div class="header-title">Supply Chain Vulnerability Map</div>
+    </div>
+    <div class="live-status"><div class="dot"></div> LIVE ASSESSMENT ACTIVE</div>
+</div>
 
-<div class="main-viewport">
+<div class="main">
+    <div class="scan-line"></div>
     <div class="controls">
-        <div class="control-group">
-            <div style="font-family:var(--font-mono); font-size:9px; color:var(--white-30); margin-bottom:10px; letter-spacing:2px;">DATA LAYERS</div>
-            <label class="control-item"><input type="checkbox" checked onchange="toggleLayer('nodes')"> API SOURCE NODES</label>
-            <label class="control-item"><input type="checkbox" checked onchange="toggleLayer('adversarial')"> ADVERSARIAL ROUTES</label>
-            <label class="control-item"><input type="checkbox" checked onchange="toggleLayer('allied')"> ALLIED ROUTES</label>
-        </div>
+        <button class="control-btn active" id="btn-adversarial" onclick="toggleLayer('adversarial')">ADVERSARIAL ROUTES</button>
+        <button class="control-btn active" id="btn-allied" onclick="toggleLayer('allied')">ALLIED ROUTES</button>
     </div>
 
     <svg id="mapSvg"></svg>
 
     <div class="detail-panel" id="detailPanel">
-        <button class="close-btn" onclick="closePanel()">CLOSE</button>
-        <div id="detailContent" style="margin-top:40px;"></div>
+        <button class="close-x" onclick="closePanel()">×</button>
+        <div id="detailContent"></div>
     </div>
 </div>
 
 <script>
-    const REGIONS = {
-        156: { 
-            name: "CHINA", color: "#E53935", type: "adversarial",
-            threat: "CRITICAL VULNERABILITY",
-            brief: "We risk losing control over our critical medicine supply when 40% of U.S. APIs originate from China. This is a strategic choke point adversaries can exploit at will, leaving our nation defenseless in a crisis.",
-            share: "42%", theft: "$2.1B", coords: [104, 35]
-        },
-        356: { 
-            name: "INDIA", color: "#FF9800", type: "diversified",
-            threat: "STRATEGIC DEPENDENCY",
-            brief: "India's reliance on China for 60-70% of its APIs ultimately funnels back to a single adversarial source. We are sacrificing our strategic independence for perceived short-term gains—a loss we cannot afford.",
-            share: "28%", theft: "$0.8B", coords: [78, 22]
-        },
-        643: {
-            name: "RUSSIA", color: "#FF5722", type: "adversarial",
-            threat: "ELEVATED THREAT",
-            brief: "While a minor API producer, Russia represents a primary vector for cyber-espionage and disinformation campaigns targeting American biopharmaceutical R&D capacity.",
-            share: "2%", theft: "$1.2B", coords: [90, 62]
-        },
-        276: {
-            name: "EU / ALLIED NATIONS", color: "#C49A2A", type: "allied",
-            threat: "DECLINING CAPACITY",
-            brief: "The allied manufacturing base is in structural decline, with global share falling from 32% to 18%. Trusted partners are currently constrained by policy-driven cost disadvantages.",
-            share: "18%", theft: "LOW", coords: [10, 50]
-        },
-        840: { 
-            name: "UNITED STATES", color: "#FFFFFF", type: "target",
-            threat: "UNILATERAL DISARMAMENT",
-            brief: "Domestic production has plummeted by 35% since 2006. Policy breaches are leading toward scientific disarmament and a dangerous, irreversible reliance on adversarial foreign powers.",
-            share: "12%", theft: "TARGET", coords: [-95, 37]
-        }
+    const DATA = {
+        china: { id: 156, name: "CHINA", threat: "CRITICAL VULNERABILITY", color: "#E53935", share: "42%", theft: "$2.1B", coords: [104, 35], type: 'adversarial',
+            brief: "The illusion of resilient supply chains masks a dangerous reality. We have already lost control over essential medical provisions with 40% of U.S. APIs originating here. This is a layered dependency choke point that can be exploited at will."},
+        india: { id: 356, name: "INDIA", threat: "STRATEGIC DEPENDENCY", color: "#FF9800", share: "28%", theft: "$0.8B", coords: [78, 22], type: 'adversarial',
+            brief: "India's reliance on China for 60-70% of its APIs ultimately funnels back to a single adversarial source. We are sacrificing our strategic independence for perceived short-term gains—a loss we cannot afford."},
+        russia: { id: 643, name: "RUSSIA", threat: "ELEVATED THREAT", color: "#FF5722", share: "2%", theft: "$1.2B", coords: [90, 62], type: 'adversarial',
+            brief: "A primary vector for cyber-espionage and disinformation campaigns. Attacks target American biopharmaceutical R&D capacity to facilitate unilateral scientific disarmament."},
+        eu: { id: 276, name: "EU / ALLIED NATIONS", threat: "DECLINING CAPACITY", color: "#C49A2A", share: "18%", theft: "LOW", coords: [10, 50], type: 'allied',
+            brief: "Allied manufacturing is in structural decline. Share has fallen from 32% to 18%. Failing to support this base compels reliance on less transparent foreign entities and adversarial supply chains."},
+        us: { id: 840, name: "UNITED STATES", threat: "UNILATERAL DISARMAMENT", color: "#FFFFFF", share: "12%", theft: "TARGET", coords: [-95, 37], type: 'target',
+            brief: "Domestic production has plummeted 35% since 2006. Short-sighted policy choices are dismantling our R&D capacity, leading to an irreversible loss of strategic autonomy."}
     };
 
     const svg = d3.select("#mapSvg");
-    const projection = d3.geoNaturalEarth1().rotate([-10, 0]).scale(250);
+    const projection = d3.geoNaturalEarth1().rotate([-10, 0]).scale(240);
     const path = d3.geoPath().projection(projection);
-    const routeLayer = svg.append("g").attr("id", "routeLayer");
-    const nodeLayer = svg.append("g").attr("id", "nodeLayer");
+    const routeLayer = svg.append("g");
 
-    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(data => {
-        const countries = topojson.feature(data, data.objects.countries);
+    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world => {
+        const countries = topojson.feature(world, world.objects.countries);
         
-        svg.append("g")
-            .selectAll("path")
+        svg.append("g").selectAll("path")
             .data(countries.features)
             .enter().append("path")
             .attr("class", d => {
-                const r = REGIONS[d.id];
-                if (r) return `country country-${r.type}`;
-                return "country";
+                const region = Object.values(DATA).find(r => r.id == d.id);
+                return region ? `country country-${region.type}` : "country";
             })
             .attr("d", path)
-            .on("click", (e, d) => showDetail(d.id));
+            .on("click", (e, d) => {
+                const region = Object.values(DATA).find(r => r.id == d.id);
+                if(region) showDetail(region);
+            });
 
         renderRoutes();
     });
 
     function renderRoutes() {
-        const target = projection(REGIONS[840].coords);
-        
-        Object.entries(REGIONS).forEach(([id, r]) => {
-            if (id == 840) return;
+        const target = projection(DATA.us.coords);
+        Object.values(DATA).forEach(r => {
+            if (r.id === 840) return;
             const start = projection(r.coords);
-            const className = r.type === "allied" ? "allied" : "adversarial";
-            
-            // Draw Arc
-            const d = `M${start[0]},${start[1]} Q${(start[0]+target[0])/2},${Math.min(start[1], target[1])-100} ${target[0]},${target[1]}`;
+            const d = `M${start[0]},${start[1]} Q${(start[0]+target[0])/2},${Math.min(start[1], target[1])-120} ${target[0]},${target[1]}`;
             
             routeLayer.append("path")
                 .attr("d", d)
-                .attr("class", `route-path route-${className}`)
-                .attr("stroke", r.color);
-
-            // Animated Particle
-            const particle = routeLayer.append("circle")
-                .attr("r", 3)
-                .attr("fill", r.color)
-                .attr("class", `particle route-${className}`);
-
-            function animate() {
-                particle.transition()
-                    .duration(3000 + Math.random() * 2000)
-                    .attrTween("transform", () => {
-                        const i = d3.interpolateString(d, d);
-                        const pathNode = routeLayer.append("path").attr("d", d).attr("display", "none").node();
-                        const l = pathNode.getTotalLength();
-                        return t => {
-                            const p = pathNode.getPointAtLength(t * l);
-                            return `translate(${p.x},${p.y})`;
-                        };
-                    })
-                    .on("end", animate);
-            }
-            animate();
+                .attr("class", `route-line route-${r.type}`)
+                .attr("stroke", r.color)
+                .attr("stroke-width", r.type === 'adversarial' ? 2 : 1.2);
         });
     }
 
     function toggleLayer(type) {
-        if (type === 'nodes') d3.select("#nodeLayer").style("opacity", event.target.checked ? 1 : 0);
-        else d3.selectAll(`.route-${type}`).style("opacity", event.target.checked ? 1 : 0);
+        const btn = document.getElementById(`btn-${type}`);
+        const isActive = btn.classList.toggle('active');
+        d3.selectAll(`.route-${type}`).style("display", isActive ? "inline" : "none");
     }
 
-    function showDetail(id) {
-        const r = REGIONS[id];
-        if (!r) return;
+    function showDetail(r) {
+        const panel = document.getElementById("detailPanel");
         document.getElementById("detailContent").innerHTML = `
-            <div style="font-family:var(--font-mono); font-size:10px; color:var(--red-bright); letter-spacing:3px;">/// STATUS: ${r.threat}</div>
-            <h2 style="font-family:var(--font-display); font-size:36px; font-weight:800; margin:15px 0;">${r.name}</h2>
-            <p style="font-family:'Source Serif 4'; font-style:italic; line-height:1.6; color:var(--silver); font-size:18px;">${r.brief}</p>
-            <div class="score-box">
-                <div class="score-val">${r.share}</div>
-                <div class="score-label">Global API Production Share</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--red-bright); letter-spacing:3px; margin-bottom:10px;">/// STATUS: ${r.threat}</div>
+            <h2 style="font-family:var(--font-display); font-size:36px; font-weight:800; margin-bottom:20px;">${r.name}</h2>
+            <p style="font-family:'Source Serif 4'; font-style:italic; line-height:1.6; color:var(--silver); font-size:18px; margin-bottom:30px;">${r.brief}</p>
+            <div class="stat-card">
+                <div class="stat-num">${r.share}</div>
+                <div class="stat-label">Global API Share</div>
             </div>
-            <div class="score-box">
-                <div class="score-val">${r.theft}</div>
-                <div class="score-label">Documented Annual IP Theft</div>
+            <div class="stat-card">
+                <div class="stat-num">${r.theft}</div>
+                <div class="stat-label">Documented Annual IP Theft</div>
             </div>
+            <button class="control-btn" style="width:100%; border:1px solid var(--red-bright); color:white;" onclick="closePanel()">Return to Assessment</button>
         `;
-        document.getElementById("detailPanel").classList.add("open");
+        panel.classList.add("open");
     }
 
     function closePanel() { document.getElementById("detailPanel").classList.remove("open"); }
 </script>
+
 </body>
 </html>
