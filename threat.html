@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABI Intelligence Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800&family=IBM+Plex+Mono:wght@400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>ABI Intelligence Portal | Supply Chain Assessment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
         :root {
             --navy: #1A2636;
             --navy-deep: #0A1628;
-            --navy-mid: #1E2D3F;
+            --navy-mid: #0F1E30;
             --red: #C62828;
             --red-bright: #E53935;
             --white: #FFFFFF;
@@ -20,9 +21,17 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--navy-deep); color: var(--white); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { 
+            background: var(--navy-deep); 
+            color: var(--white); 
+            font-family: 'Inter', sans-serif; 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
 
-        /* --- NAVIGATION (EXACT SYNC) --- */
+        /* --- NAVIGATION --- */
         nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             padding: 0 48px; height: 72px; display: flex; align-items: center; justify-content: space-between;
@@ -33,48 +42,49 @@
         .nav-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.3); margin: 0 12px; }
         .nav-logo-text { font-family: var(--font-display); font-weight: 600; font-size: 13px; letter-spacing: 3.5px; color: rgba(255,255,255,0.9); text-transform: uppercase; }
         .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
-        .nav-links a { font-family: var(--font-display); font-weight: 500; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.7); text-decoration: none; }
+        .nav-links a { font-family: var(--font-display); font-weight: 500; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.7); text-decoration: none; transition: 0.3s; }
+        .nav-links a:hover { color: var(--white); }
         .nav-cta { padding: 10px 24px; border: 1px solid var(--red); color: var(--white) !important; font-weight: 700 !important; }
 
-        /* --- TICKER --- */
-        .ticker { background: #000; border-bottom: 1px solid var(--red); overflow: hidden; padding: 12px 0; margin-top: 72px; z-index: 100; }
-        .ticker-track { display: flex; animation: scroll 50s linear infinite; gap: 50px; width: fit-content; }
-        .ticker-item { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; color: var(--silver); letter-spacing: 1px; text-transform: uppercase; }
-        .ticker-item span { color: var(--red-bright); font-weight: bold; }
-
-        /* --- MAP HUD --- */
-        .viewport { flex: 1; position: relative; background: radial-gradient(circle at center, var(--navy-mid), var(--navy-deep)); }
-        .grid-bg { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 50px 50px; }
-        .scan-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--red-bright); opacity: 0.2; animation: scan 10s linear infinite; z-index: 10; }
+        /* --- HUD --- */
+        .viewport { flex: 1; position: relative; margin-top: 72px; background: radial-gradient(circle at center, var(--navy-mid), var(--navy-deep)); }
+        .grid-bg { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; }
+        .scan-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--red-bright); opacity: 0.2; pointer-events: none; animation: scan 12s linear infinite; z-index: 10; }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
 
-        /* --- ANIMATED ROUTES --- */
-        .route { fill: none; stroke-dasharray: 10, 5; stroke-opacity: 0.5; animation: flow 20s linear infinite; }
+        /* --- TICKER --- */
+        .ticker { background: #000; border-bottom: 1px solid var(--red); overflow: hidden; padding: 12px 0; z-index: 100; position: relative; }
+        .ticker-track { display: flex; animation: scroll 50s linear infinite; gap: 50px; }
+        .ticker-item { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; color: var(--silver); letter-spacing: 1px; text-transform: uppercase; }
+        .ticker-item span { color: var(--red-bright); font-weight: bold; }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        /* --- MAP & ROUTES --- */
+        #mapSvg { width: 100%; height: 100%; }
+        .land { fill: rgba(255,255,255,0.06); stroke: rgba(255,255,255,0.1); stroke-width: 0.5; pointer-events: none; }
+        .route-line { fill: none; stroke-dasharray: 10, 5; animation: flow 20s linear infinite; transition: opacity 0.5s; }
         @keyframes flow { to { stroke-dashoffset: -500; } }
         .node-pulse { animation: pulse 3s infinite; }
-        @keyframes pulse { 0% { r: 3; opacity: 1; } 100% { r: 15; opacity: 0; } }
+        @keyframes pulse { 0% { r: 2; opacity: 1; } 100% { r: 12; opacity: 0; } }
 
-        /* --- UI CONTROLS --- */
-        .controls { position: absolute; top: 20px; left: 30px; z-index: 500; }
+        /* --- CONTROLS --- */
+        .map-controls { position: absolute; top: 30px; left: 40px; z-index: 500; }
         .control-panel { background: rgba(10, 22, 40, 0.9); border: 1px solid var(--white-08); padding: 20px; backdrop-filter: blur(10px); }
         .layer-toggle { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); letter-spacing: 2px; font-size: 11px; margin-bottom: 10px; cursor: pointer; color: var(--silver); }
-        .layer-toggle input { accent-color: var(--red-bright); }
+        .layer-toggle input { accent-color: var(--red-bright); width: 16px; height: 16px; }
 
         /* --- SIDE PANEL --- */
         .side-panel {
             position: absolute; top: 0; right: 0; width: 450px; height: 100%;
             background: var(--navy); border-left: 2px solid var(--red);
             transform: translateX(100%); transition: 0.5s cubic-bezier(0.2, 1, 0.3, 1);
-            z-index: 1500; padding: 60px 40px; overflow-y: auto;
+            z-index: 1500; padding: 60px 40px; overflow-y: auto; box-shadow: -20px 0 50px rgba(0,0,0,0.6);
         }
-        .side-panel.open { transform: translateX(0); box-shadow: -20px 0 50px rgba(0,0,0,0.6); }
-        .close-btn { position: absolute; top: 25px; right: 25px; background: none; border: 1px solid rgba(255,255,255,0.2); color: white; width: 35px; height: 35px; cursor: pointer; font-size: 20px; }
-
+        .side-panel.open { transform: translateX(0); }
+        .close-btn { position: absolute; top: 25px; right: 25px; background: none; border: 1px solid rgba(255,255,255,0.2); color: white; width: 35px; height: 35px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }
         .brief-title { font-family: var(--font-display); font-size: 38px; font-weight: 800; margin-bottom: 25px; line-height: 1; text-transform: uppercase; }
         .data-card { background: var(--navy-deep); border: 1px solid var(--white-08); padding: 25px; margin-bottom: 20px; }
         .data-val { font-family: var(--font-display); font-size: 42px; font-weight: 800; color: var(--red-bright); }
-
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     </style>
 </head>
 <body>
@@ -93,58 +103,25 @@
     </ul>
 </nav>
 
-<div class="ticker">
-    <div class="ticker-track">
-        <div class="ticker-item">STRATEGIC LIABILITY: <span>80%+</span> API FOREIGN DEPENDENCY</div>
-        <div class="ticker-item">SCIENTIFIC DISARMAMENT: <span>35%</span> DOMESTIC MFG DECLINE</div>
-        <div class="ticker-item">GENOMIC EXPOSURE: <span>8.4M</span> DNA PROFILES SCRAPED</div>
-        <div class="ticker-item">IP THEFT: <span>$4.7B</span> ANNUAL LOSS TO ADVERSARIES</div>
-        <div class="ticker-item">STRATEGIC LIABILITY: <span>80%+</span> API FOREIGN DEPENDENCY</div>
-        <div class="ticker-item">SCIENTIFIC DISARMAMENT: <span>35%</span> DOMESTIC MFG DECLINE</div>
-    </div>
-</div>
-
 <div class="viewport">
     <div class="grid-bg"></div>
     <div class="scan-line"></div>
 
-    <div class="controls">
+    <div class="ticker">
+        <div class="ticker-track" id="ticker-content">
+            </div>
+    </div>
+
+    <div class="map-controls">
         <div class="control-panel">
-            <div style="font-family:var(--font-mono); font-size:9px; color:var(--white-30); margin-bottom:15px; letter-spacing:3px;">DATA VECTORS</div>
-            <label class="layer-toggle"><input type="checkbox" checked onchange="toggleLayer('adversarial', this.checked)"> ADVERSARIAL SUPPLY ROUTES</label>
-            <label class="layer-toggle"><input type="checkbox" checked onchange="toggleLayer('allied', this.checked)"> TRUSTED NETWORK ROUTES</label>
-            <label class="layer-toggle"><input type="checkbox" checked onchange="toggleLayer('nodes', this.checked)"> INTEL SOURCE NODES</label>
+            <div style="font-family:var(--font-mono); font-size:9px; color:var(--white-30); margin-bottom:15px; letter-spacing:3px;">DATA VECTORS V2.1</div>
+            <label class="layer-toggle"><input type="checkbox" checked onchange="updateRoutes('adversarial', this.checked)"> ADVERSARIAL ROUTES</label>
+            <label class="layer-toggle"><input type="checkbox" checked onchange="updateRoutes('allied', this.checked)"> TRUSTED NETWORK ROUTES</label>
+            <label class="layer-toggle"><input type="checkbox" checked onchange="updateNodes(this.checked)"> INTEL SOURCE NODES</label>
         </div>
     </div>
 
-    <svg id="mapContainer" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" style="width:100%; height:100%;">
-        <g id="adversarial-routes">
-            <path class="route" stroke="#E53935" stroke-width="2" d="M820,260 Q520,150 220,250" /> <path class="route" stroke="#FF9800" stroke-width="2" d="M710,350 Q465,300 220,250" /> <path class="route" stroke="#FF5722" stroke-width="1.5" d="M630,150 Q425,100 220,250" /> </g>
-        <g id="allied-routes">
-            <path class="route" stroke="#C49A2A" stroke-width="1.2" d="M490,210 Q355,180 220,250" /> <path class="route" stroke="#4CAF50" stroke-width="1" d="M880,280 Q550,100 220,250" /> </g>
-
-        <g id="nodes-layer">
-            <g onclick="openBrief('china')" style="cursor:pointer">
-                <circle cx="820" cy="260" r="6" fill="#E53935" />
-                <circle cx="820" cy="260" r="6" class="node-pulse" stroke="#E53935" fill="none" />
-                <text x="820" y="285" fill="white" font-size="12" font-family="var(--font-display)" text-anchor="middle" letter-spacing="2">CHINA (42%)</text>
-            </g>
-            <g onclick="openBrief('india')" style="cursor:pointer">
-                <circle cx="710" cy="350" r="5" fill="#FF9800" />
-                <circle cx="710" cy="350" r="5" class="node-pulse" stroke="#FF9800" fill="none" />
-                <text x="710" y="375" fill="white" font-size="10" font-family="var(--font-display)" text-anchor="middle">INDIA (28%)</text>
-            </g>
-            <g onclick="openBrief('eu')" style="cursor:pointer">
-                <circle cx="490" cy="210" r="5" fill="#C49A2A" />
-                <circle cx="490" cy="210" r="5" class="node-pulse" stroke="#C49A2A" fill="none" />
-                <text x="490" y="235" fill="white" font-size="10" font-family="var(--font-display)" text-anchor="middle">EU / ALLIES</text>
-            </g>
-            <g>
-                <circle cx="220" cy="250" r="8" fill="white" />
-                <text x="220" y="280" fill="white" font-size="14" font-family="var(--font-display)" font-weight="800" text-anchor="middle" letter-spacing="2">UNITED STATES</text>
-            </g>
-        </g>
-    </svg>
+    <svg id="mapSvg"></svg>
 
     <div class="side-panel" id="sidePanel">
         <button class="close-btn" onclick="closePanel()">×</button>
@@ -153,42 +130,91 @@
 </div>
 
 <script>
+    // INTEL DATA (Integrated from your Message Sets)
     const INTEL = {
-        china: { 
-            name: "CHINA", threat: "CRITICAL VULNERABILITY",
-            brief: "We risk losing control over our critical medicine supply when 40% of U.S. APIs originate from China. This creates a strategic choke point that adversaries can exploit at will, leaving our nation defenseless in a crisis.",
-            share: "42%", theft: "$2.1B"
-        },
-        india: { 
-            name: "INDIA", threat: "STRATEGIC DEPENDENCY",
-            brief: "The focus on immediate trade figures obscures a deeper loss. India's reliance on China for 60-70% of its APIs means our supply chain ultimately funnels back to a single adversarial source. This is a strategic liability that strips us of a critical defense asset.",
-            share: "28%", theft: "$0.8B"
-        },
-        eu: { 
-            name: "EU / ALLIES", threat: "DECLINING CAPACITY",
-            brief: "Domestic innovation is eroding. Allied manufacturing share has fallen from 32% to 18%. Failing to support this base compels reliance on foreign entities, leading toward unilateral scientific disarmament.",
-            share: "18%", theft: "MINIMAL"
-        }
+        china: { name: "CHINA", threat: "CRITICAL VULNERABILITY", color: "#E53935", type: 'adversarial', brief: "Accepting a 40% API dependency on China is a strategic forfeit. This choke point leaves the nation defenseless in a crisis. We must reverse this scientific disarmament.", share: "42%", theft: "$2.1B", pos: [820, 180] },
+        india: { name: "INDIA", threat: "STRATEGIC DEPENDENCY", color: "#FF9800", type: 'adversarial', brief: "India relies on China for 70% of its APIs. Our diversified supply chain is an illusion—it ultimately funnels back to an adversary, creating an unacceptable security risk.", share: "28%", theft: "$0.8B", pos: [710, 240] },
+        russia: { name: "RUSSIA", threat: "ELEVATED THREAT", color: "#FF5722", type: 'adversarial', brief: "Russia represents a primary vector for cyber-espionage and disinformation designed to facilitate American scientific disarmament and strategic forfeiture.", share: "2%", theft: "$1.2B", pos: [630, 100] },
+        eu: { name: "EU / ALLIES", color: "#C49A2A", type: 'allied', threat: "DECLINING CAPACITY", brief: "Our innovation base is eroding as allied share has fallen to 18%. This unilateral disarmament compels reliance on foreign entities, sacrificing our strategic autonomy.", share: "18%", theft: "MINIMAL", pos: [490, 140] },
+        us: { name: "UNITED STATES", threat: "TARGET", color: "#FFFFFF", type: 'target', brief: "Domestic production has plummeted 35% since 2006. Short-sighted policy choices are actively dismantling our R&D capacity, leading to a catastrophic loss of autonomy.", share: "12%", theft: "TARGET", pos: [200, 160] }
     };
 
-    function openBrief(id) {
-        const r = INTEL[id];
-        document.getElementById('sideContent').innerHTML = `
-            <span style="font-family:var(--font-mono); color:var(--red-bright); letter-spacing:4px; font-size:10px;">/// INTEL BRIEF: ${r.threat}</span>
+    // EMBEDDED MAP GEOMETRY (Standardizes visuals for Vercel/GitHub)
+    const landPaths = [
+        "M150,110 L280,100 L320,150 L250,280 L140,250 Z", // North America
+        "M180,290 L240,300 L260,450 L160,440 Z", // South America
+        "M450,120 L580,100 L620,150 L550,220 L440,210 Z", // Eurasia West
+        "M650,100 L950,120 L920,350 L700,320 Z", // Eurasia East
+        "M460,240 L580,250 L600,450 L450,440 Z", // Africa
+        "M800,350 L950,340 L930,480 L820,460 Z" // Australia
+    ];
+
+    const svg = d3.select("#mapSvg");
+    const g = svg.append("g");
+    
+    // Draw Map Shapes
+    g.selectAll(".land")
+        .data(landPaths)
+        .enter().append("path")
+        .attr("class", "land")
+        .attr("d", d => d);
+
+    function init() {
+        const US = INTEL.us;
+
+        // Draw Arcs
+        Object.values(INTEL).forEach(r => {
+            if (r === US) return;
+            const arc = `M ${r.pos[0]} ${r.pos[1]} Q ${(r.pos[0] + US.pos[0])/2} ${Math.min(r.pos[1], US.pos[1]) - 80} ${US.pos[0]} ${US.pos[1]}`;
+            
+            g.append("path")
+                .attr("d", arc)
+                .attr("class", `route-line route-${r.type}`)
+                .attr("stroke", r.color)
+                .attr("stroke-width", r.type === 'adversarial' ? 2 : 1)
+                .attr("fill", "none");
+
+            const node = g.append("g")
+                .attr("class", "intel-node")
+                .style("cursor", "pointer")
+                .on("click", () => showDetail(r));
+
+            node.append("circle").attr("cx", r.pos[0]).attr("cy", r.pos[1]).attr("r", 4).attr("fill", r.color);
+            node.append("circle").attr("cx", r.pos[0]).attr("cy", r.pos[1]).attr("r", 4).attr("class", "node-pulse").attr("stroke", r.color).attr("fill", "none");
+            node.append("text").attr("x", r.pos[0]).attr("y", r.pos[1] + 20).attr("text-anchor", "middle").attr("fill", "white").attr("font-family", "var(--font-display)").attr("font-size", "11px").attr("letter-spacing", "1px").text(r.name);
+        });
+
+        // US Node
+        g.append("circle").attr("cx", US.pos[0]).attr("cy", US.pos[1]).attr("r", 8).attr("fill", "white");
+        g.append("text").attr("x", US.pos[0]).attr("y", US.pos[1] + 30).attr("text-anchor", "middle").attr("fill", "white").attr("font-family", "var(--font-display)").attr("font-size", "14px").attr("font-weight", "800").text("UNITED STATES");
+
+        // Build Ticker
+        const ticker = document.getElementById('ticker-content');
+        const items = [
+            "STRATEGIC LIABILITY: <span>80%+</span> API FOREIGN DEPENDENCY",
+            "SCIENTIFIC DISARMAMENT: <span>35%</span> DOMESTIC MFG DECLINE",
+            "GENOMIC EXPOSURE: <span>8.4M</span> DNA PROFILES SCRAPED",
+            "IP THEFT: <span>$4.7B</span> ANNUAL LOSS TO ADVERSARIES"
+        ];
+        ticker.innerHTML = items.concat(items).map(i => `<div class="ticker-item">${i}</div>`).join('');
+    }
+
+    function showDetail(r) {
+        document.getElementById("sideContent").innerHTML = `
+            <span style="font-family:var(--font-mono); color:var(--red-bright); letter-spacing:4px; font-size:10px;">/// STATUS: ${r.threat}</span>
             <h2 class="brief-title">${r.name}</h2>
             <p class="brief-text">${r.brief}</p>
             <div class="data-card"><div class="data-val">${r.share}</div><div class="data-label">Global API Share Capacity</div></div>
-            <div class="data-card"><div class="data-val">${r.theft}</div><div class="data-label">Annual Documented IP Loss</div></div>
+            <div class="data-card"><div class="data-val">${r.theft}</div><div class="data-label">Documented Annual IP Loss</div></div>
         `;
-        document.getElementById('sidePanel').classList.add('open');
+        document.getElementById("sidePanel").classList.add("open");
     }
 
-    function closePanel() { document.getElementById('sidePanel').classList.remove('open'); }
+    function closePanel() { document.getElementById("sidePanel").classList.remove("open"); }
+    function updateRoutes(type, show) { d3.selectAll(`.route-${type}`).style("opacity", show ? 1 : 0); }
+    function updateNodes(show) { d3.selectAll(".intel-node").style("opacity", show ? 1 : 0); }
 
-    function toggleLayer(layer, isVisible) {
-        document.getElementById(layer + '-routes')?.setAttribute('opacity', isVisible ? '1' : '0');
-        if (layer === 'nodes') document.getElementById('nodes-layer').setAttribute('opacity', isVisible ? '1' : '0');
-    }
+    init();
 </script>
 </body>
 </html>
