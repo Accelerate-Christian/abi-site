@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABI · Supply Chain Intelligence Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;600&family=Source+Serif+4:opsz,ital,wght@8..60,1,400;8..60,1,600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <style>
+        :root {
+            /* Colors synced from index.html */
+            --navy: #1A2636;
+            --navy-deep: #131D2A;
+            --navy-mid: #1E2D3F;
+            --red: #C62828;
+            --red-bright: #E53935;
+            --white: #FFFFFF;
+            --silver: #B0BEC5;
+            --font-display: 'Barlow Condensed', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--navy-deep); 
+            color: var(--white); 
+            font-family: var(--font-body); 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        .app-header {
+            padding: 12px 48px;
+            background: var(--navy);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-text { 
+            font-family: var(--font-display); 
+            text-transform: uppercase; 
+            letter-spacing: 3px; 
+            font-size: 14px;
+        }
+        .live-status {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--red-bright);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 2px;
+        }
+        .dot { width: 8px; height: 8px; background: var(--red-bright); border-radius: 50%; animation: pulse 2s infinite; }
+
+        /* --- TICKER (Loss Aversion Data) --- */
+        .ticker { background: #000; border-bottom: 1px solid var(--red); overflow: hidden; white-space: nowrap; padding: 10px 0; }
+        .ticker-track { display: inline-block; animation: scroll 40s linear infinite; }
+        .ticker-item { display: inline-block; padding: 0 30px; font-family: var(--font-mono); font-size: 12px; color: var(--silver); }
+        .ticker-item span { color: var(--red-bright); font-weight: bold; }
+
+        /* --- MAIN MAP AREA --- */
+        .main-viewport { flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at center, var(--navy-mid), var(--navy-deep)); }
+        
+        #mapSvg { width: 100%; height: 100%; }
+        .country { fill: rgba(255,255,255,0.04); stroke: rgba(255,255,255,0.1); stroke-width: 0.5; transition: all 0.3s; }
+        .country:hover { fill: rgba(255,255,255,0.1); }
+        .country-adversarial { fill: rgba(198, 40, 40, 0.15); stroke: rgba(198, 40, 40, 0.3); }
+        .country-allied { fill: rgba(76, 175, 80, 0.1); }
+        
+        /* --- CONTROLS & LEGEND --- */
+        .ui-overlay { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .control-btn { 
+            pointer-events: all;
+            background: var(--navy); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: var(--silver);
+            padding: 10px 20px;
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: left;
+            min-width: 200px;
+        }
+        .control-btn.active { border-left: 4px solid var(--red-bright); background: rgba(198, 40, 40, 0.1); color: white; }
+
+        /* --- DETAIL PANEL (Scorecard Style) --- */
+        .detail-panel {
+            position: absolute; top: 0; right: 0; width: 400px; height: 100%;
+            background: var(--navy); border-left: 1px solid rgba(255,255,255,0.1);
+            transform: translateX(100%); transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 200; padding: 40px; overflow-y: auto;
+        }
+        .detail-panel.open { transform: translateX(0); box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
+        .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        
+        .threat-tag { font-family: var(--font-mono); color: var(--red-bright); font-size: 10px; letter-spacing: 3px; margin-bottom: 10px; display: block; }
+        .region-title { font-family: var(--font-display); font-size: 32px; font-weight: 800; margin-bottom: 20px; color: var(--white); }
+        .intel-brief { font-family: 'Source Serif 4'; font-style: italic; line-height: 1.6; color: var(--silver); margin-bottom: 30px; font-size: 16px; }
+        
+        .stat-box { background: var(--navy-deep); border: 1px solid rgba(255,255,255,0.05); padding: 20px; margin-bottom: 20px; }
+        .stat-val { font-family: var(--font-display); font-size: 40px; font-weight: 800; color: var(--red-bright); }
+        .stat-label { font-family: var(--font-mono); font-size: 9px; color: var(--white-50); text-transform: uppercase; letter-spacing: 2px; }
+
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="logo-area">
+        <svg width="30" height="30" viewBox="0 0 36 36"><rect width="36" height="36" rx="5" fill="#1A2636"/><circle cx="18" cy="18" r="12" fill="none" stroke="#B0BEC5" stroke-width="2"/><circle cx="18" cy="18" r="4" fill="#E53935"/></svg>
+        <span class="logo-text">Supply Chain Intelligence Portal</span>
+    </div>
+    <div class="live-status"><div class="dot"></div> SYSTEM STATUS: ACTIVE ANALYTICS</div>
+</header>
+
+<div class="ticker">
+    <div class="ticker-track">
+        <div class="ticker-item">NATIONAL SECURITY RISK: <span>80%+</span> API FOREIGN DEPENDENCY</div>
+        <div class="ticker-item">SCIENTIFIC DISARMAMENT: <span>35%</span> DOMESTIC MFG DECLINE</div>
+        <div class="ticker-item">GEOPOLITICAL CHOKEPOINT: <span>40%</span> CHINESE SOURCE INGREDIENTS</div>
+        <div class="ticker-item">IP AT RISK: <span>$4.7B</span> ANNUAL THEFT BY ADVERSARIES</div>
+        <div class="ticker-item">NATIONAL SECURITY RISK: <span>80%+</span> API FOREIGN DEPENDENCY</div>
+        <div class="ticker-item">SCIENTIFIC DISARMAMENT: <span>35%</span> DOMESTIC MFG DECLINE</div>
+        <div class="ticker-item">GEOPOLITICAL CHOKEPOINT: <span>40%</span> CHINESE SOURCE INGREDIENTS</div>
+    </div>
+</div>
+
+<div class="main-viewport">
+    <div class="ui-overlay">
+        <button class="control-btn active" onclick="toggleLayer('sources')">/// API SOURCE NODES</button>
+        <button class="control-btn active" onclick="toggleLayer('routes')">/// ADVERSARIAL ROUTES</button>
+    </div>
+    <svg id="mapSvg"></svg>
+
+    <div class="detail-panel" id="detailPanel">
+        <button class="close-btn" onclick="closePanel()">×</button>
+        <div id="detailContent">
+            </div>
+    </div>
+</div>
+
+<script>
+    // MESSAGING INTEGRATION (Based on Loss Aversion provided)
+    const REGIONS = {
+        china: {
+            id: 156,
+            name: "CHINA",
+            threat: "CRITICAL VULNERABILITY",
+            brief: "The illusion of resilient supply chains masks a dangerous reality. We have already lost control over essential medical provisions with 40% of U.S. APIs originating here. This is a layered dependency choke point that can be exploited at will, leaving our nation defenseless in a crisis.",
+            share: "42%",
+            theft: "$2.1B",
+            color: "#E53935",
+            factors: ["Military-Civil Fusion Mandate", "Genomic Data Harvesting", "Supply Weaponization Precedent"]
+        },
+        india: {
+            id: 356,
+            name: "INDIA",
+            threat: "STRATEGIC DEPENDENCY",
+            brief: "While appearing as a diversified route, 60-70% of India's API inputs ultimately funnel back to China. We are sacrificing our strategic independence for a perceived short-term gain—a loss we cannot afford as the domestic industrial base continues to diminish.",
+            share: "28%",
+            theft: "$0.8B",
+            color: "#FF9800",
+            factors: ["Opaque Upstream Dependencies", "Regulatory Enforcement Gaps", "Export Restriction History"]
+        },
+        us: {
+            id: 840,
+            name: "UNITED STATES",
+            threat: "UNILATERAL DISARMAMENT",
+            brief: "We are actively eroding our ability to innovate. Domestic production has plummeted by 35% since 2006. Short-sighted policy choices are dismantling our R&D capacity, resulting in a catastrophic loss of strategic autonomy that leaves America vulnerable to geopolitical coercion.",
+            share: "12%",
+            theft: "TARGET",
+            color: "#4CAF50",
+            factors: ["Infrastructure Erosion", "R&D Disinvestment", "Policy-Driven Outsourcing"]
+        }
+    };
+
+    const svg = d3.select("#mapSvg");
+    const g = svg.append("g");
+    const projection = d3.geoNaturalEarth1().rotate([-10, 0]);
+    const path = d3.geoPath().projection(projection);
+
+    // Initial Load
+    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(data => {
+        const countries = topojson.feature(data, data.objects.countries);
+        
+        g.selectAll("path")
+            .data(countries.features)
+            .enter().append("path")
+            .attr("class", d => {
+                const reg = Object.values(REGIONS).find(r => r.id == d.id);
+                if (reg && reg.name === "CHINA") return "country country-adversarial";
+                if (reg && reg.name === "UNITED STATES") return "country country-allied";
+                return "country";
+            })
+            .attr("d", path)
+            .on("click", (event, d) => {
+                const regKey = Object.keys(REGIONS).find(key => REGIONS[key].id == d.id);
+                if (regKey) selectRegion(regKey);
+            });
+
+        // Zoom/Resize logic
+        const resize = () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            projection.scale(w / 6).translate([w / 2, h / 2]);
+            g.selectAll("path").attr("d", path);
+        };
+        window.addEventListener("resize", resize);
+        resize();
+    });
+
+    function selectRegion(key) {
+        const r = REGIONS[key];
+        const panel = document.getElementById("detailPanel");
+        const content = document.getElementById("detailContent");
+
+        content.innerHTML = `
+            <span class="threat-tag">/// STATUS: ${r.threat}</span>
+            <h2 class="region-title">${r.name}</h2>
+            <div class="intel-brief">${r.brief}</div>
+            <div class="stat-box">
+                <div class="stat-val">${r.share}</div>
+                <div class="stat-label">Global API Share</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">${r.theft}</div>
+                <div class="stat-label">Annual IP Loss Est.</div>
+            </div>
+            <h3 style="font-family:var(--font-display); letter-spacing:2px; margin-bottom:15px;">RISK VECTORS</h3>
+            <ul style="list-style:none; font-family:var(--font-mono); font-size:11px; color:var(--silver);">
+                ${r.factors.map(f => `<li style="margin-bottom:8px; border-left:2px solid var(--red); padding-left:10px;">${f}</li>`).join('')}
+            </ul>
+        `;
+        panel.classList.add("open");
+    }
+
+    function closePanel() {
+        document.getElementById("detailPanel").classList.remove("open");
+    }
+
+    function toggleLayer(type) {
+        // Placeholder for layer toggle logic
+        event.target.classList.toggle("active");
+    }
+</script>
+</body>
+</html>
