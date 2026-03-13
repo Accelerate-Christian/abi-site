@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABI — Campaign Performance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07101c;
+  --bg2:#0d1a2d;
+  --bg3:#112035;
+  --bg4:#152540;
+  --border:#1c3048;
+  --border2:#254060;
+  --text:#d6e5f3;
+  --text2:#7a9db8;
+  --text3:#3e607a;
+  --blue:#3C79A8;
+  --blue2:#5ba4d9;
+  --blue3:#1d3f5e;
+  --green:#22c97a;
+  --green2:#0a4a2a;
+  --amber:#f5a623;
+  --amber2:#4a3000;
+  --red:#e05252;
+  --red2:#3a1010;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+a{color:var(--blue2);text-decoration:none}
+
+/* ── HEADER ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200}
+.hdr-left{display:flex;align-items:center;gap:20px}
+.hdr-mark{display:flex;align-items:center;gap:10px}
+.hdr-mark-bar{width:3px;height:28px;background:var(--blue);border-radius:2px}
+.hdr-mark-text{display:flex;flex-direction:column}
+.hdr-org{font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--text2);text-transform:uppercase}
+.hdr-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.01em}
+.hdr-divider{width:1px;height:24px;background:var(--border)}
+.hdr-right{display:flex;align-items:center;gap:14px}
+.live-pill{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--green);letter-spacing:.06em;text-transform:uppercase}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:lpulse 2s ease-in-out infinite}
+@keyframes lpulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--green)}50%{opacity:.5;box-shadow:0 0 12px var(--green)}}
+.illus-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:3px;background:rgba(245,166,35,.12);color:var(--amber);border:1px solid rgba(245,166,35,.25);letter-spacing:.04em;text-transform:uppercase}
+.hdr-date{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace}
+.hdr-conf{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;padding:3px 9px;border:1px solid var(--border2);border-radius:3px}
+
+/* ── LAYOUT ── */
+.main{padding:20px 28px 40px;max-width:1500px;margin:0 auto}
+.row{display:grid;gap:12px;margin-bottom:12px}
+.r-2-1{grid-template-columns:2fr 1fr}
+.r-1-1{grid-template-columns:1fr 1fr}
+.r-3{grid-template-columns:1fr 1fr 1fr}
+.r-3-5{grid-template-columns:3fr 5fr}
+.r-full{grid-template-columns:1fr}
+
+/* ── KPI STRIP ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;border-top:2px solid var(--blue3);transition:all .2s;cursor:default;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--blue3),transparent);opacity:0;transition:opacity .3s}
+.kpi:hover{border-top-color:var(--blue);border-color:var(--border2)}
+.kpi:hover::after{opacity:1}
+.kpi-n{font-size:34px;font-weight:700;color:var(--blue2);line-height:1;margin-bottom:4px;font-family:'DM Mono',monospace;letter-spacing:-.02em}
+.kpi-n.green{color:var(--green)}
+.kpi-l{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.09em;text-transform:uppercase;margin-bottom:3px}
+.kpi-sub{font-size:11px;color:var(--text3)}
+.kpi-trend{font-size:11px;color:var(--green);margin-top:5px;display:flex;align-items:center;gap:4px}
+.kpi-trend svg{width:10px;height:10px;fill:var(--green)}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
+.card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-title{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.1em;text-transform:uppercase}
+.cbadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.05em}
+.cb-blue{background:rgba(91,164,217,.15);color:var(--blue2)}
+.cb-green{background:rgba(34,201,122,.12);color:var(--green)}
+.cb-amber{background:rgba(245,166,35,.12);color:var(--amber)}
+.cb-gray{background:var(--bg3);color:var(--text2)}
+
+/* ── TREND CHART ── */
+.chart-area{position:relative;height:200px}
+
+/* ── JOURNEY ── */
+.journey-wrap{}
+.journey-stages{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px}
+.j-stage{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 10px 12px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.j-stage:hover{border-color:var(--blue3);background:var(--bg4)}
+.j-stage.active{border-color:var(--blue);background:rgba(60,121,168,.12)}
+.j-num{font-size:9px;font-weight:700;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.j-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.j-pct{font-size:26px;font-weight:700;color:var(--blue2);line-height:1;font-family:'DM Mono',monospace}
+.j-bar{height:3px;background:var(--border);border-radius:2px;margin-top:8px}
+.j-bar-fill{height:100%;border-radius:2px;background:var(--blue);transition:width 1s ease}
+.j-label{font-size:10px;color:var(--text3);margin-top:4px}
+.j-arrow{position:absolute;right:-7px;top:50%;transform:translateY(-50%);width:12px;height:12px;z-index:1;color:var(--border2)}
+.j-detail{background:rgba(60,121,168,.07);border:1px solid rgba(60,121,168,.25);border-radius:8px;padding:16px;display:none;animation:fadeIn .25s ease}
+.j-detail.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.j-detail-title{font-size:11px;font-weight:700;color:var(--blue2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.j-detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.j-det-item{background:var(--bg3);border-radius:6px;padding:10px 12px}
+.j-det-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.j-det-val{font-size:15px;font-weight:600;color:var(--text)}
+.j-det-sub{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* ── PESO ── */
+.peso-items{display:flex;flex-direction:column;gap:8px}
+.peso-item{cursor:pointer;padding:12px 14px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);transition:all .2s;position:relative;overflow:hidden}
+.peso-item:hover{border-color:var(--border2)}
+.peso-item.active{border-color:var(--blue);background:rgba(60,121,168,.1)}
+.peso-row{display:flex;align-items:center;gap:10px}
+.peso-swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.peso-name{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.peso-count{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;line-height:1}
+.peso-pct{font-size:11px;color:var(--text3);width:34px;text-align:right}
+.peso-track{height:3px;background:var(--border);border-radius:2px;margin-top:10px}
+.peso-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.peso-channels{display:none;flex-wrap:wrap;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.peso-channels.show{display:flex}
+.p-chip{font-size:11px;padding:3px 9px;border-radius:3px}
+
+/* ── MEDIA LIST ── */
+.media-list{display:flex;flex-direction:column;gap:7px}
+.media-item{padding:11px 13px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;transition:border-color .2s}
+.media-item:hover{border-color:var(--border2)}
+.media-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap;padding-top:2px;min-width:54px}
+.media-body{flex:1}
+.media-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;line-height:1.3}
+.media-outlet{font-size:11px;color:var(--text2)}
+.m-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;flex-shrink:0;letter-spacing:.04em;text-transform:uppercase}
+.mt-oped{background:rgba(91,164,217,.2);color:var(--blue2)}
+.mt-int{background:rgba(34,201,122,.12);color:var(--green)}
+.mt-pod{background:rgba(245,166,35,.12);color:var(--amber)}
+.mt-pick{background:var(--bg4);color:var(--text2)}
+
+/* ── VALIDATORS ── */
+.val-list{display:flex;flex-direction:column;gap:7px}
+.val-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);transition:border-color .2s}
+.val-item:hover{border-color:var(--border2)}
+.val-avatar{width:34px;height:34px;border-radius:50%;background:var(--blue3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue2);flex-shrink:0;font-family:'DM Mono',monospace}
+.val-info{flex:1}
+.val-role{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
+.val-sector{font-size:11px;color:var(--text2);margin-top:1px}
+.val-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.vs-active{background:rgba(34,201,122,.12);color:var(--green)}
+.vs-prog{background:rgba(245,166,35,.12);color:var(--amber)}
+.vs-target{background:var(--bg4);color:var(--text2)}
+
+/* ── CALENDAR ── */
+.cal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cal-month{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;transition:border-color .2s}
+.cal-month:hover{border-color:var(--border2)}
+.cal-month.supply{border-left:3px solid #5ba4d9}
+.cal-month.genomic{border-left:3px solid #22c97a}
+.cal-month.intel{border-left:3px solid var(--amber)}
+.cal-month.strategy{border-left:3px solid #a78bfa}
+.cal-month.launch{border-left:3px solid var(--green)}
+.cal-month.hearing{border-left:3px solid var(--amber);border-left-width:3px}
+.cal-month.audit{border-left:3px solid #22c97a}
+.cal-month.election{border-left:3px solid var(--red)}
+.cal-name{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;font-family:'DM Mono',monospace}
+.cal-theme{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.2}
+.cal-event{font-size:11px;color:var(--text3);margin-top:5px;display:flex;align-items:flex-start;gap:5px;line-height:1.35}
+.cal-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:4px}
+
+/* ── OBJECTIVE ── */
+.objective{padding:18px 22px;border-left:3px solid var(--blue);background:rgba(60,121,168,.07);border-radius:0 8px 8px 0}
+.obj-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.obj-text{font-size:14px;color:var(--text2);line-height:1.75}
+
+/* ── SECTION LABEL ── */
+.sec-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sec-label::before{content:'';display:block;width:16px;height:2px;background:var(--blue);border-radius:1px}
+
+/* ── METRIC ROW ── */
+.mrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.mrow:last-child{border-bottom:none}
+.mrow-label{font-size:12px;color:var(--text);flex:1;min-width:0}
+.mrow-sub{font-size:10px;color:var(--text3);display:block;margin-top:1px}
+.mrow-track{width:90px;height:4px;background:var(--border);border-radius:2px;flex-shrink:0}
+.mrow-fill{height:100%;border-radius:2px;background:var(--blue);transition:width 1s ease}
+.mrow-val{font-size:13px;font-weight:600;color:var(--text);width:34px;text-align:right;flex-shrink:0;font-family:'DM Mono',monospace}
+.mrow-tgt{font-size:10px;color:var(--text3);width:48px;text-align:right;flex-shrink:0}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── FADE IN ON LOAD ── */
+.fade-in{opacity:0;transform:translateY(10px);animation:fadeUp .5s ease forwards}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.fade-in:nth-child(1){animation-delay:.05s}
+.fade-in:nth-child(2){animation-delay:.1s}
+.fade-in:nth-child(3){animation-delay:.15s}
+.fade-in:nth-child(4){animation-delay:.2s}
+.fade-in:nth-child(5){animation-delay:.25s}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-mark">
+      <div class="hdr-mark-bar"></div>
+      <div class="hdr-mark-text">
+        <span class="hdr-org">American Biosecurity Initiative</span>
+        <span class="hdr-title">Campaign Performance Dashboard</span>
+      </div>
+    </div>
+    <div class="hdr-divider"></div>
+    <div class="live-pill"><span class="live-dot"></span>Live</div>
+    <div class="illus-tag">Illustrative</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-date" id="hdr-date"></div>
+    <div class="hdr-divider"></div>
+    <div class="hdr-conf">Confidential</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip" style="margin-bottom:16px">
+    <div class="kpi fade-in">
+      <div class="kpi-l">Total Impressions</div>
+      <div class="kpi-n" id="kpi-imp">1.1M</div>
+      <div class="kpi-sub">Across all active channels</div>
+      <div class="kpi-trend">
+        <svg viewBox="0 0 10 10"><polyline points="0,8 4,3 7,5 10,1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        +62% week over week
+      </div>
+    </div>
+    <div class="kpi fade-in">
+      <div class="kpi-l">Congressional Touchpoints</div>
+      <div class="kpi-n">8</div>
+      <div class="kpi-sub">Briefings and staff contacts</div>
+      <div class="kpi-trend">
+        <svg viewBox="0 0 10 10"><polyline points="0,8 4,3 7,5 10,1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        3 this week
+      </div>
+    </div>
+    <div class="kpi fade-in">
+      <div class="kpi-l">Earned Placements</div>
+      <div class="kpi-n">3</div>
+      <div class="kpi-sub">Op-eds, podcasts, interviews</div>
+      <div class="kpi-trend">
+        <svg viewBox="0 0 10 10"><polyline points="0,8 4,3 7,5 10,1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        1 pending publication
+      </div>
+    </div>
+    <div class="kpi fade-in">
+      <div class="kpi-l">Validators Active</div>
+      <div class="kpi-n green">2</div>
+      <div class="kpi-sub">Defense and IC voices deployed</div>
+      <div class="kpi-trend">
+        <svg viewBox="0 0 10 10"><polyline points="0,8 4,3 7,5 10,1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        2 more in pipeline
+      </div>
+    </div>
+    <div class="kpi fade-in">
+      <div class="kpi-l">Message Penetration</div>
+      <div class="kpi-n">12%</div>
+      <div class="kpi-sub">Priority Hill audience reached</div>
+      <div class="kpi-trend">
+        <svg viewBox="0 0 10 10"><polyline points="0,8 4,3 7,5 10,1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        Target: 65% at 6 months
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Trend chart + PESO donut -->
+  <div class="row r-2-1" style="margin-bottom:12px">
+    <div class="card fade-in">
+      <div class="card-hdr">
+        <div class="card-title">Impression Delivery — Weekly Trend</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="display:inline-block;width:20px;height:2px;background:var(--blue2);border-radius:1px"></span>Actual</span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)"><span style="display:inline-block;width:20px;height:2px;background:var(--border2);border-radius:1px;border-top:1px dashed var(--border2)"></span>Projected</span>
+        </div>
+      </div>
+      <div class="chart-area"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-hdr">
+        <div class="card-title">Content by PESO Type</div>
+        <div class="cbadge cb-blue">224 pieces</div>
+      </div>
+      <div style="position:relative;height:170px;display:flex;align-items:center;justify-content:center">
+        <canvas id="pesoDonut"></canvas>
+        <div style="position:absolute;text-align:center;pointer-events:none">
+          <div style="font-size:28px;font-weight:700;color:var(--blue2);font-family:'DM Mono',monospace">224</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Total</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px" id="peso-legend"></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Journey stages -->
+  <div class="card fade-in" style="margin-bottom:12px">
+    <div class="card-hdr">
+      <div class="card-title">Message Journey — Audience Engagement by Stage</div>
+      <div class="cbadge cb-gray">Click a stage to explore</div>
+    </div>
+    <div class="journey-stages" id="journey-stages"></div>
+    <div class="j-detail" id="j-detail"></div>
+  </div>
+
+  <!-- ROW 3: PESO Arsenal + Earned Media -->
+  <div class="row r-1-1" style="margin-bottom:12px">
+    <div class="card fade-in">
+      <div class="card-hdr">
+        <div class="card-title">Content Arsenal by Channel Type</div>
+        <div class="cbadge cb-gray">Click to expand</div>
+      </div>
+      <div class="peso-items" id="peso-items"></div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-hdr">
+        <div class="card-title">Earned Media Tracker</div>
+        <div class="cbadge cb-green">3 placements</div>
+      </div>
+      <div class="media-list">
+        <div class="media-item">
+          <div class="media-date">Mar 11</div>
+          <div class="media-body">
+            <div class="media-title">China's Biotech Dominance Is a National Security Crisis</div>
+            <div class="media-outlet">The Hill — Validator byline, defense sector</div>
+          </div>
+          <div class="m-tag mt-oped">Op-Ed</div>
+        </div>
+        <div class="media-item">
+          <div class="media-date">Mar 9</div>
+          <div class="media-body">
+            <div class="media-title">The CCP's Quiet War on American Biopharma</div>
+            <div class="media-outlet">National Security Hour Podcast — 45 min interview</div>
+          </div>
+          <div class="m-tag mt-pod">Podcast</div>
+        </div>
+        <div class="media-item">
+          <div class="media-date">Mar 7</div>
+          <div class="media-body">
+            <div class="media-title">New Biosecurity Coalition Raises Alarm on Supply Chain Gaps</div>
+            <div class="media-outlet">Defense One — Launch coverage, 3,200 words</div>
+          </div>
+          <div class="m-tag mt-pick">Press</div>
+        </div>
+        <div class="media-item" style="border:1px dashed var(--border);opacity:.6">
+          <div class="media-date">Pending</div>
+          <div class="media-body">
+            <div class="media-title">Why Congress Needs to Act on Genomic Data Security</div>
+            <div class="media-outlet">Washington Examiner — Validator byline, IC sector</div>
+          </div>
+          <div class="m-tag mt-oped">Op-Ed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Validators + Paid Metrics -->
+  <div class="row r-1-1" style="margin-bottom:12px">
+    <div class="card fade-in">
+      <div class="card-hdr">
+        <div class="card-title">Validator Pipeline</div>
+        <div class="cbadge cb-blue">Target: 10 voices</div>
+      </div>
+      <div class="val-list">
+        <div class="val-item">
+          <div class="val-avatar">D1</div>
+          <div class="val-info">
+            <div class="val-role">Retired 4-Star General</div>
+            <div class="val-sector">Defense and Intelligence sector</div>
+          </div>
+          <div class="val-status vs-active">Active</div>
+        </div>
+        <div class="val-item">
+          <div class="val-avatar">D2</div>
+          <div class="val-info">
+            <div class="val-role">Former DIA Senior Analyst</div>
+            <div class="val-sector">Defense and Intelligence sector</div>
+          </div>
+          <div class="val-status vs-active">Active</div>
+        </div>
+        <div class="val-item">
+          <div class="val-avatar">IC</div>
+          <div class="val-info">
+            <div class="val-role">Former CIA Station Chief</div>
+            <div class="val-sector">Intelligence Community</div>
+          </div>
+          <div class="val-status vs-prog">In Progress</div>
+        </div>
+        <div class="val-item">
+          <div class="val-avatar">HX</div>
+          <div class="val-info">
+            <div class="val-role">Former HHS Senior Official</div>
+            <div class="val-sector">Health and Policy sector</div>
+          </div>
+          <div class="val-status vs-prog">In Progress</div>
+        </div>
+        <div class="val-item">
+          <div class="val-avatar">D3</div>
+          <div class="val-info">
+            <div class="val-role">Retired 3-Star Admiral</div>
+            <div class="val-sector">Defense and Intelligence sector</div>
+          </div>
+          <div class="val-status vs-target">Targeted</div>
+        </div>
+        <div class="val-item">
+          <div class="val-avatar">AI</div>
+          <div class="val-info">
+            <div class="val-role">Technology and Health AI Leader</div>
+            <div class="val-sector">Technology and Health AI sector</div>
+          </div>
+          <div class="val-status vs-target">Targeted</div>
+        </div>
+      </div>
+    </div>
+    <div class="card fade-in">
+      <div class="card-hdr">
+        <div class="card-title">Paid Media Performance</div>
+        <div class="cbadge cb-blue">Week 3 of 52</div>
+      </div>
+      <div class="mrow">
+        <div class="mrow-label">Twitter / X impressions<span class="mrow-sub">Promoted content, national security targeting</span></div>
+        <div class="mrow-track"><div class="mrow-fill" style="width:14%"></div></div>
+        <div class="mrow-val">420K</div>
+        <div class="mrow-tgt">3M tgt</div>
+      </div>
+      <div class="mrow">
+        <div class="mrow-label">LinkedIn reach<span class="mrow-sub">Hill staff and policy audience</span></div>
+        <div class="mrow-track"><div class="mrow-fill" style="width:22%"></div></div>
+        <div class="mrow-val">330K</div>
+        <div class="mrow-tgt">1.5M tgt</div>
+      </div>
+      <div class="mrow">
+        <div class="mrow-label">Google search clicks<span class="mrow-sub">Policy and defense keyword targeting</span></div>
+        <div class="mrow-track"><div class="mrow-fill" style="width:18%"></div></div>
+        <div class="mrow-val">9.2K</div>
+        <div class="mrow-tgt">50K tgt</div>
+      </div>
+      <div class="mrow">
+        <div class="mrow-label">Connected TV completions<span class="mrow-sub">DC market, national security households</span></div>
+        <div class="mrow-track"><div class="mrow-fill" style="width:12%"></div></div>
+        <div class="mrow-val">62K</div>
+        <div class="mrow-tgt">500K tgt</div>
+      </div>
+      <div class="mrow">
+        <div class="mrow-label">Average click-through rate<span class="mrow-sub">All paid channels combined</span></div>
+        <div class="mrow-track"><div class="mrow-fill" style="width:85%;background:var(--green)"></div></div>
+        <div class="mrow-val" style="color:var(--green)">2.1%</div>
+        <div class="mrow-tgt">2.5% tgt</div>
+      </div>
+      <div class="mrow">
+        <div class="mrow-label">Congressional staff click-through<span class="mrow-sub">Verified .gov and Hill IP ranges</span></div>
+        <div class="mrow-track"><div class="mrow-fill" style="width:60%;background:var(--green)"></div></div>
+        <div class="mrow-val" style="color:var(--green)">4.8%</div>
+        <div class="mrow-tgt">4% tgt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="card fade-in" style="margin-bottom:12px">
+    <div class="card-hdr">
+      <div class="card-title">Campaign Calendar — 2026</div>
+      <div class="cbadge cb-gray">Thematic operations + key activations</div>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-month supply">
+        <div class="cal-name">March 2026</div>
+        <div class="cal-theme">Launch — Supply Chain Focus</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--blue2)"></span>Campaign goes live. Full PESO activation across 18 channels.</div>
+      </div>
+      <div class="cal-month supply">
+        <div class="cal-name">April 2026</div>
+        <div class="cal-theme">Supply Chain Security Month</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--blue2)"></span>Pillar I content surge. CCP industrial policy framing. API dependency data push.</div>
+      </div>
+      <div class="cal-month hearing">
+        <div class="cal-name">May 2026</div>
+        <div class="cal-theme">USITC Testimony</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--amber)"></span>Filing deadline May 11. Public hearing May 27 and 28. ABI on the record.</div>
+      </div>
+      <div class="cal-month genomic">
+        <div class="cal-name">June 2026</div>
+        <div class="cal-theme">Genomic Security Month</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--green)"></span>Pillar III focus. BGI-PLA nexus. Clinical trial data exposure. Precision medicine risk.</div>
+      </div>
+      <div class="cal-month launch">
+        <div class="cal-name">July 2026</div>
+        <div class="cal-theme">Congressional Index Launch</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--green)"></span>Voters for Biosecurity scorecard goes live. Member positioning tracked and published.</div>
+      </div>
+      <div class="cal-month audit">
+        <div class="cal-name">August 2026</div>
+        <div class="cal-theme">Biosecurity Audit Launch</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--green)"></span>Public audit of U.S. supply chain exposure. Hard data. Validator-led release.</div>
+      </div>
+      <div class="cal-month intel">
+        <div class="cal-name">September 2026</div>
+        <div class="cal-theme">Intellectual Security Month</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--amber)"></span>Pillar II focus. IP theft documentation. R&D flight risk. Innovation investment framing.</div>
+      </div>
+      <div class="cal-month election">
+        <div class="cal-name">Oct — Dec 2026</div>
+        <div class="cal-theme">Electoral Accountability Push</div>
+        <div class="cal-event"><span class="cal-dot" style="background:var(--red)"></span>Scorecard activation. Voters for Biosecurity PAC deployment. Priority district targeting.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBJECTIVE -->
+  <div class="objective fade-in">
+    <div class="obj-label">Campaign Objective</div>
+    <div class="obj-text">ABI reframes pharmaceutical policy as a national security imperative. The CCP has spent decades targeting U.S. biopharma. Domestic policies that weaken innovation and erode IP protections hand Beijing exactly what it wants. ABI makes that case through voices Congress cannot dismiss and makes those policies politically toxic.</div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── DATE ──
+document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+// ── TREND CHART ──
+const weeks = ['Mar 2','Mar 9','Mar 16 (est)','Mar 23','Mar 30','Apr 6','Apr 13','Apr 20','Apr 27','May 4','May 11','May 18'];
+const actual = [125000,380000,620000,null,null,null,null,null,null,null,null,null];
+const projected = [null,null,620000,1100000,1650000,2300000,3100000,4000000,5100000,6400000,7800000,9500000];
+
+const tCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(tCtx,{
+  type:'line',
+  data:{
+    labels:weeks,
+    datasets:[
+      {label:'Actual',data:actual,borderColor:'#5ba4d9',backgroundColor:'rgba(91,164,217,.08)',borderWidth:2.5,pointBackgroundColor:'#5ba4d9',pointRadius:4,pointHoverRadius:6,tension:.4,fill:true,spanGaps:false},
+      {label:'Projected',data:projected,borderColor:'#254060',backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#254060',pointRadius:3,pointHoverRadius:5,tension:.4,fill:false,spanGaps:false}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'#0d1a2d',borderColor:'#1c3048',borderWidth:1,
+        titleColor:'#7a9db8',bodyColor:'#d6e5f3',padding:10,
+        callbacks:{
+          label:function(ctx){
+            const v=ctx.raw;
+            if(v===null)return null;
+            return ' '+ctx.dataset.label+': '+(v>=1000000?(v/1000000).toFixed(2)+'M':(v/1000).toFixed(0)+'K');
+          }
+        }
+      }
+    },
+    scales:{
+      x:{grid:{color:'rgba(28,48,72,.6)',drawBorder:false},ticks:{color:'#3e607a',font:{size:10,family:"'DM Mono',monospace"},maxRotation:45}},
+      y:{grid:{color:'rgba(28,48,72,.6)',drawBorder:false},ticks:{color:'#3e607a',font:{size:10,family:"'DM Mono',monospace"},callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'K':v},beginAtZero:true}
+    }
+  }
+});
+
+// ── PESO DONUT ──
+const pesoData={
+  labels:['Paid','Shared','Earned','Owned'],
+  values:[105,84,32,3],
+  colors:['#0A1828','#3C79A8','#6A8898','#1c3048'],
+  bright:['#5ba4d9','#7ec8f0','#a0bfcf','#4a7090']
+};
+const pCtx=document.getElementById('pesoDonut').getContext('2d');
+new Chart(pCtx,{
+  type:'doughnut',
+  data:{labels:pesoData.labels,datasets:[{data:pesoData.values,backgroundColor:pesoData.colors,hoverBackgroundColor:pesoData.bright,borderColor:'#07101c',borderWidth:3,hoverBorderColor:'#07101c'}]},
+  options:{
+    responsive:true,maintainAspectRatio:false,cutout:'72%',
+    plugins:{
+      legend:{display:false},
+      tooltip:{backgroundColor:'#0d1a2d',borderColor:'#1c3048',borderWidth:1,titleColor:'#7a9db8',bodyColor:'#d6e5f3',padding:10}
+    }
+  }
+});
+// Legend
+const pl=document.getElementById('peso-legend');
+pesoData.labels.forEach((l,i)=>{
+  const d=document.createElement('div');
+  d.style.cssText='display:flex;align-items:center;gap:6px;font-size:11px;color:#7a9db8;';
+  d.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;background:${pesoData.bright[i]};flex-shrink:0;display:block"></span>${l} <span style="margin-left:auto;font-family:'DM Mono',monospace;color:#d6e5f3;font-weight:600">${pesoData.values[i]}</span>`;
+  pl.appendChild(d);
+});
+
+// ── JOURNEY STAGES ──
+const stages=[
+  {n:'1',name:'Evidence',pct:73,label:'of reached audience',channels:['Twitter / X','Google Search','Native Display','Landing Page'],content:['Evidence dossier','Fact sheets','Infographics','Search ads'],impressions:'620K',ctr:'2.4%',dwell:'3m 12s',bounce:'38%'},
+  {n:'2',name:'Trust',pct:56,label:'of Stage 1 audience',channels:['LinkedIn','Op-Ed placement','Podcast','Press coverage'],content:['Validator op-eds','Podcast series','National security brief','Press releases'],impressions:'451K',ctr:'3.1%',dwell:'5m 44s',bounce:'29%'},
+  {n:'3',name:'Threat',pct:42,label:'of Stage 2 audience',channels:['Connected TV','Direct outreach','Email','LinkedIn'],content:['CTV :30 spot','Military readiness brief','Hill staff email','Threat assessment'],impressions:'252K',ctr:'1.8%',dwell:'4m 20s',bounce:'33%'},
+  {n:'4',name:'Believe',pct:29,label:'of Stage 3 audience',channels:['Email outreach','Direct mail','LinkedIn','Newsletter'],content:['Long-form policy brief','Coalition letters','Newsletter feature','Whitepaper'],impressions:'106K',ctr:'4.2%',dwell:'8m 10s',bounce:'22%'},
+  {n:'5',name:'Act',pct:16,label:'of Stage 4 audience',channels:['Direct outreach','Congressional briefing','SMS','Email'],content:['Briefing packets','One-pagers','Action alerts','Meeting requests'],impressions:'31K',ctr:'6.8%',dwell:'12m 05s',bounce:'14%'},
+  {n:'6',name:'Advocate',pct:7,label:'of Stage 5 audience',channels:['Direct relationship','Scorecard','Coalition','Briefing'],content:['Scorecard deployment','Floor statement drafts','Coalition sign-ons','Ongoing briefings'],impressions:'5K',ctr:'N/A',dwell:'18m+',bounce:'8%'},
+];
+const jWrap=document.getElementById('journey-stages');
+const jDetail=document.getElementById('j-detail');
+let activeStage=null;
+
+stages.forEach((s,i)=>{
+  const el=document.createElement('div');
+  el.className='j-stage';
+  el.innerHTML=`
+    <div class="j-num">Stage ${s.n}</div>
+    <div class="j-name">${s.name}</div>
+    <div class="j-pct">${s.pct}%</div>
+    <div class="j-label">${s.label}</div>
+    <div class="j-bar"><div class="j-bar-fill" style="width:0%" data-w="${s.pct}%"></div></div>
+  `;
+  el.onclick=()=>{
+    if(activeStage===i){
+      activeStage=null;
+      el.classList.remove('active');
+      jDetail.classList.remove('show');
+      jDetail.innerHTML='';
+      return;
+    }
+    document.querySelectorAll('.j-stage').forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+    activeStage=i;
+    jDetail.classList.add('show');
+    jDetail.innerHTML=`
+      <div class="j-detail-title">Stage ${s.n}: ${s.name} — Channel and Content Detail</div>
+      <div class="j-detail-grid">
+        <div class="j-det-item"><div class="j-det-label">Impressions</div><div class="j-det-val">${s.impressions}</div><div class="j-det-sub">At this stage</div></div>
+        <div class="j-det-item"><div class="j-det-label">Click-Through</div><div class="j-det-val">${s.ctr}</div><div class="j-det-sub">Average across channels</div></div>
+        <div class="j-det-item"><div class="j-det-label">Avg Dwell Time</div><div class="j-det-val">${s.dwell}</div><div class="j-det-sub">On landing content</div></div>
+        <div class="j-det-item"><div class="j-det-label">Bounce Rate</div><div class="j-det-val">${s.bounce}</div><div class="j-det-sub">Below 40% target</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <div><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Active Channels</div><div style="display:flex;flex-wrap:wrap;gap:5px">${s.channels.map(c=>`<span class="p-chip" style="background:rgba(60,121,168,.15);color:#5ba4d9;border:1px solid rgba(60,121,168,.2)">${c}</span>`).join('')}</div></div>
+        <div><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Content Formats</div><div style="display:flex;flex-wrap:wrap;gap:5px">${s.content.map(c=>`<span class="p-chip" style="background:var(--bg4);color:var(--text2);border:1px solid var(--border)">${c}</span>`).join('')}</div></div>
+      </div>
+    `;
+  };
+  jWrap.appendChild(el);
+});
+setTimeout(()=>{
+  document.querySelectorAll('.j-bar-fill').forEach(el=>{el.style.width=el.dataset.w});
+},300);
+
+// ── PESO ITEMS ──
+const pesoItems=[
+  {name:'Paid',count:105,pct:47,color:'#0A1828',bright:'#5ba4d9',channels:['Twitter / X — 30 pieces','LinkedIn — 20 pieces','Google Search — 15 pieces','Native Display — 15 pieces','YouTube — 10 pieces','Connected TV — 8 pieces','Facebook / Meta — 4 pieces','Digital Display — 3 pieces']},
+  {name:'Shared',count:84,pct:38,color:'#3C79A8',bright:'#7ec8f0',channels:['Email Outreach — 25 pieces','Newsletter — 25 pieces','Direct Outreach — 20 pieces','SMS / Text — 14 pieces']},
+  {name:'Earned',count:32,pct:14,color:'#6A8898',bright:'#a0bfcf',channels:['Press Release — 10 pieces','Op-Ed Placement — 8 pieces','Podcast Series — 8 pieces','Media Interviews — 6 pieces']},
+  {name:'Owned',count:3,pct:1,color:'#1c3048',bright:'#4a7090',channels:['Website — 2 pieces','Video Content — 1 piece']},
+];
+const piWrap=document.getElementById('peso-items');
+pesoItems.forEach((p,i)=>{
+  const el=document.createElement('div');
+  el.className='peso-item';
+  el.innerHTML=`
+    <div class="peso-row">
+      <span class="peso-swatch" style="background:${p.bright}"></span>
+      <span class="peso-name">${p.name}</span>
+      <span class="peso-count" style="color:${p.bright}">${p.count}</span>
+      <span class="peso-pct">${p.pct}%</span>
+    </div>
+    <div class="peso-track"><div class="peso-fill" style="width:0%;background:${p.bright}" data-w="${p.pct}%"></div></div>
+    <div class="peso-channels" id="pc-${i}">${p.channels.map(c=>`<span class="p-chip" style="background:rgba(60,121,168,.1);color:#7a9db8;border:1px solid var(--border)">${c}</span>`).join('')}</div>
+  `;
+  el.onclick=()=>{
+    el.classList.toggle('active');
+    const ch=document.getElementById(`pc-${i}`);
+    ch.classList.toggle('show');
+  };
+  piWrap.appendChild(el);
+});
+setTimeout(()=>{
+  document.querySelectorAll('.peso-fill').forEach(el=>{el.style.width=el.dataset.w});
+},400);
+</script>
+</body>
+</html>
