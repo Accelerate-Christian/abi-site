@@ -32,6 +32,61 @@
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
 a{color:var(--blue2);text-decoration:none}
 
+/* ── PASSWORD GATE ── */
+#pw-gate{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  animation:gateIn .4s ease;
+}
+@keyframes gateIn{from{opacity:0}to{opacity:1}}
+#pw-gate.unlock{animation:gateOut .5s ease forwards}
+@keyframes gateOut{from{opacity:1}to{opacity:0;pointer-events:none}}
+.pw-box{
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:14px;
+  padding:40px 44px;
+  width:380px;
+  text-align:center;
+  box-shadow:0 32px 80px rgba(0,0,0,.6);
+  animation:boxUp .45s cubic-bezier(.22,1,.36,1);
+}
+@keyframes boxUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.pw-bar{width:3px;height:28px;background:var(--blue);border-radius:2px;margin:0 auto 18px}
+.pw-org{font-size:9px;font-weight:700;letter-spacing:.16em;color:var(--text2);text-transform:uppercase;margin-bottom:4px}
+.pw-title{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-.01em;margin-bottom:6px}
+.pw-sub{font-size:12px;color:var(--text3);margin-bottom:28px}
+.pw-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;text-align:left;margin-bottom:6px}
+.pw-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:7px;padding:11px 14px;color:var(--text);
+  font-size:14px;font-family:'DM Mono',monospace;letter-spacing:.1em;
+  outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:14px;
+}
+.pw-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(60,121,168,.2)}
+.pw-input.shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.pw-btn{
+  width:100%;padding:12px;background:var(--blue);border:none;border-radius:7px;
+  color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;transition:background .2s,transform .1s;font-family:'DM Sans',sans-serif;
+}
+.pw-btn:hover{background:var(--blue2)}
+.pw-btn:active{transform:scale(.98)}
+.pw-err{font-size:11px;color:var(--red);margin-top:10px;min-height:16px;transition:opacity .2s}
+.pw-err.hide{opacity:0}
+.pw-conf{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text3);border:1px solid var(--border);border-radius:3px;
+  padding:3px 8px;margin-top:22px;
+}
+
+/* ── CONTENT (hidden until unlocked) ── */
+#app-content{display:none}
+#app-content.visible{display:block}
+
 /* ── HEADER ── */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200}
 .hdr-left{display:flex;align-items:center;gap:20px}
@@ -202,6 +257,24 @@ a{color:var(--blue2);text-decoration:none}
 </style>
 </head>
 <body>
+
+<!-- PASSWORD GATE -->
+<div id="pw-gate">
+  <div class="pw-box">
+    <div class="pw-bar"></div>
+    <div class="pw-org">American Biosecurity Initiative</div>
+    <div class="pw-title">Campaign Dashboard</div>
+    <div class="pw-sub">This document is confidential. Enter the access password to continue.</div>
+    <div class="pw-label">Password</div>
+    <input class="pw-input" id="pw-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+    <button class="pw-btn" id="pw-btn">Access Dashboard</button>
+    <div class="pw-err hide" id="pw-err">Incorrect password. Please try again.</div>
+    <div class="pw-conf">Confidential — Authorized Access Only</div>
+  </div>
+</div>
+
+<!-- APP CONTENT (hidden until unlocked) -->
+<div id="app-content">
 
 <!-- HEADER -->
 <div class="hdr">
@@ -523,12 +596,46 @@ a{color:var(--blue2);text-decoration:none}
   </div>
 
 </div><!-- /main -->
+</div><!-- /app-content -->
 
 <script>
-// ── DATE ──
+// ── PASSWORD GATE ──
+(function(){
+  const gate = document.getElementById('pw-gate');
+  const input = document.getElementById('pw-input');
+  const btn = document.getElementById('pw-btn');
+  const err = document.getElementById('pw-err');
+  const content = document.getElementById('app-content');
+
+  function attempt(){
+    if(input.value === 'letmein'){
+      gate.classList.add('unlock');
+      setTimeout(()=>{
+        gate.style.display='none';
+        content.classList.add('visible');
+        initDashboard();
+      }, 500);
+    } else {
+      err.classList.remove('hide');
+      err.textContent = 'Incorrect password. Please try again.';
+      input.classList.add('shake');
+      input.value = '';
+      setTimeout(()=>input.classList.remove('shake'), 400);
+    }
+  }
+
+  btn.addEventListener('click', attempt);
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') attempt(); });
+  input.focus();
+})();
+
+// ── DASHBOARD INIT (runs after unlock) ──
+function initDashboard(){
+
+// DATE
 document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
-// ── TREND CHART ──
+// TREND CHART
 const weeks = ['Mar 2','Mar 9','Mar 16 (est)','Mar 23','Mar 30','Apr 6','Apr 13','Apr 20','Apr 27','May 4','May 11','May 18'];
 const actual = [125000,380000,620000,null,null,null,null,null,null,null,null,null];
 const projected = [null,null,620000,1100000,1650000,2300000,3100000,4000000,5100000,6400000,7800000,9500000];
@@ -567,7 +674,7 @@ new Chart(tCtx,{
   }
 });
 
-// ── PESO DONUT ──
+// PESO DONUT
 const pesoData={
   labels:['Paid','Shared','Earned','Owned'],
   values:[105,84,32,3],
@@ -586,7 +693,6 @@ new Chart(pCtx,{
     }
   }
 });
-// Legend
 const pl=document.getElementById('peso-legend');
 pesoData.labels.forEach((l,i)=>{
   const d=document.createElement('div');
@@ -595,7 +701,7 @@ pesoData.labels.forEach((l,i)=>{
   pl.appendChild(d);
 });
 
-// ── JOURNEY STAGES ──
+// JOURNEY STAGES
 const stages=[
   {n:'1',name:'Evidence',pct:73,label:'of reached audience',channels:['Twitter / X','Google Search','Native Display','Landing Page'],content:['Evidence dossier','Fact sheets','Infographics','Search ads'],impressions:'620K',ctr:'2.4%',dwell:'3m 12s',bounce:'38%'},
   {n:'2',name:'Trust',pct:56,label:'of Stage 1 audience',channels:['LinkedIn','Op-Ed placement','Podcast','Press coverage'],content:['Validator op-eds','Podcast series','National security brief','Press releases'],impressions:'451K',ctr:'3.1%',dwell:'5m 44s',bounce:'29%'},
@@ -650,7 +756,7 @@ setTimeout(()=>{
   document.querySelectorAll('.j-bar-fill').forEach(el=>{el.style.width=el.dataset.w});
 },300);
 
-// ── PESO ITEMS ──
+// PESO ITEMS
 const pesoItems=[
   {name:'Paid',count:105,pct:47,color:'#0A1828',bright:'#5ba4d9',channels:['Twitter / X — 30 pieces','LinkedIn — 20 pieces','Google Search — 15 pieces','Native Display — 15 pieces','YouTube — 10 pieces','Connected TV — 8 pieces','Facebook / Meta — 4 pieces','Digital Display — 3 pieces']},
   {name:'Shared',count:84,pct:38,color:'#3C79A8',bright:'#7ec8f0',channels:['Email Outreach — 25 pieces','Newsletter — 25 pieces','Direct Outreach — 20 pieces','SMS / Text — 14 pieces']},
@@ -681,6 +787,8 @@ pesoItems.forEach((p,i)=>{
 setTimeout(()=>{
   document.querySelectorAll('.peso-fill').forEach(el=>{el.style.width=el.dataset.w});
 },400);
+
+} // end initDashboard
 </script>
 </body>
 </html>
